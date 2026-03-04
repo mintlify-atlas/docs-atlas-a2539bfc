@@ -1,0 +1,163 @@
+---
+title: Debug Mode
+description: Enable HubSpot's debug mode to see detailed console logs and module information
+---
+
+Debug Mode adds the `hsDebug=true` parameter to your HubSpot URLs, enabling detailed debugging information in the browser console.
+
+## What It Does
+
+When Debug Mode is enabled, HubSpot outputs:
+- Detailed module rendering information
+- HUBL template execution logs
+- JavaScript initialization logs
+- Content rendering pipeline details
+- Error messages and stack traces
+
+## How to Use It
+
+### Via Popup
+
+1. Click the FreshJuice extension icon
+2. Toggle **Debug Mode** on
+3. The page will reload with `?hsDebug=true` added to the URL
+
+### Via Context Menu
+
+1. Right-click anywhere on the page
+2. Select **FreshJuice HubSpot DevTools** → **Add Debug Mode**
+3. The page will reload with the parameter enabled
+
+### Via Keyboard Shortcut
+
+Use `Ctrl+Shift+D` (or `Cmd+Shift+D` on Mac) to toggle Debug Mode on the current page.
+
+## URL Parameter
+
+Debug Mode adds this parameter to your URLs:
+
+```
+hsDebug=true
+```
+
+**Example URL:**
+```
+https://www.example.com/page?hsDebug=true
+```
+
+<Note>
+The parameter is only added to HTTP(S) URLs. Non-HTTP URLs and special protocols (mailto:, tel:, javascript:) are not modified.
+</Note>
+
+## Technical Details
+
+### Parameter Configuration
+
+From `src/lib/url-params.js:8`:
+
+```javascript
+const URL_PARAMS = {
+  hsDebug: { key: 'hsDebug', value: 'true' }
+};
+```
+
+### Toggle Logic
+
+The extension checks the current URL for the parameter and sets the toggle state accordingly (`src/popup/popup.js:54`):
+
+```javascript
+Object.entries(URL_PARAMS).forEach(([mode, { key }]) => {
+  modes[mode] = urlHasParam(url, key);
+});
+```
+
+## Use Cases
+
+### Debugging Module Rendering Issues
+
+Enable Debug Mode to see which modules are being rendered and in what order:
+
+```
+1. Enable Debug Mode
+2. Open browser DevTools console
+3. Look for HubSpot module logs
+4. Identify which modules are failing or slow
+```
+
+### Troubleshooting HUBL Templates
+
+Debug Mode reveals HUBL template execution details:
+
+```
+1. Enable Debug Mode on your page
+2. Check console for HUBL rendering logs
+3. Identify template variables and their values
+4. Find template execution errors
+```
+
+### Inspecting Content Rendering
+
+See how HubSpot processes and renders your content:
+
+```
+1. Enable Debug Mode
+2. Watch the console during page load
+3. Review content rendering pipeline logs
+4. Identify bottlenecks or errors
+```
+
+<Tip>
+Combine Debug Mode with [Cache Buster](/features/cache-buster) to ensure you're always seeing the latest debug output without cached data.
+</Tip>
+
+## Domain Management
+
+When you enable Debug Mode for the first time on a domain, that domain is automatically added to your allowed domains list. This enables:
+
+- Badge counter showing active parameters
+- Auto-apply to links feature (if enabled)
+- Persistent parameters across sessions (if enabled)
+
+<Warning>
+Debug Mode can generate significant console output on complex pages. This may impact performance in some browsers. Use it only when actively debugging.
+</Warning>
+
+## Persistence
+
+If **Persist across sessions** is enabled in settings:
+
+1. Debug Mode state is saved when you enable it
+2. When you navigate to other pages on the same domain, the parameter is automatically re-applied
+3. The parameter persists even after closing and reopening your browser
+
+To clear persistence, either:
+- Toggle Debug Mode off
+- Click **Forget Website** in the popup
+- Remove the domain from Settings
+
+## Edge Cases
+
+### Parameter Already Exists
+
+If the URL already has `hsDebug=true`, toggling Debug Mode off will remove it. Toggling it on again will re-add it.
+
+### Multiple Parameters
+
+Debug Mode works seamlessly with other parameters:
+
+```
+https://example.com?hsDebug=true&hsCacheBuster=1234567890&developerMode=true
+```
+
+Use **Add All Params** from the context menu to enable all three at once.
+
+### Non-HubSpot Sites
+
+The `hsDebug` parameter has no effect on non-HubSpot websites. The extension will still add it if you enable Debug Mode, but it won't produce any debugging output.
+
+## Related Features
+
+- [Cache Buster](/features/cache-buster) - Force fresh content loading
+- [Developer Mode](/features/developer-mode) - Enable HubSpot developer features
+- [Context Menus](/features/context-menus) - Quick access to all parameters
+- [Auto-Apply Links](/features/auto-apply-links) - Propagate parameters to same-domain links

@@ -1,97 +1,223 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "HubSpot DevTools Extension"
+description: "Quick access to debug parameters and HubL documentation for HubSpot CMS developers"
+mode: "custom"
 ---
 
-## Setting up
+<div className="relative overflow-hidden bg-gradient-to-br from-[#f1a431] via-[#f45100] to-[#559c1d] dark:from-[#1a1d27] dark:via-[#242838] dark:to-[#1a1d27] py-20">
+  <div className="max-w-6xl mx-auto px-6 sm:px-8">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+      <div className="lg:col-span-7 space-y-6">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white dark:text-white leading-tight">
+          Supercharge Your HubSpot Development
+        </h1>
+        <p className="text-lg sm:text-xl text-white/90 dark:text-gray-300 max-w-2xl">
+          Quick access to debug parameters, cache busting, and HubL documentation. Build faster, debug smarter.
+        </p>
+        <div className="flex flex-wrap gap-4">
+          <a 
+            href="/quickstart" 
+            className="inline-flex items-center px-6 py-3 bg-white dark:bg-[#242838] text-[#f45100] dark:text-[#f1a431] font-semibold rounded-full hover:bg-gray-100 dark:hover:bg-[#2d3142] transition-all shadow-lg hover:shadow-xl no-underline"
+          >
+            Get Started
+            <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </a>
+          <a 
+            href="/installation" 
+            className="inline-flex items-center px-6 py-3 border-2 border-white/30 dark:border-[#27272a] bg-white/10 dark:bg-[#1a1d27] text-white dark:text-gray-300 font-semibold rounded-full hover:bg-white/20 dark:hover:bg-[#242838] hover:border-white/50 dark:hover:border-[#f1a431] transition-all no-underline"
+          >
+            Installation Guide
+          </a>
+        </div>
+        <div className="flex flex-wrap gap-4 pt-4">
+          <a 
+            href="https://chromewebstore.google.com/detail/jmlcckldioeofjchfaomgaimhpnlfgok" 
+            target="_blank"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 dark:bg-[#1a1d27] text-white dark:text-gray-300 text-sm rounded-lg hover:bg-white/20 dark:hover:bg-[#242838] transition-colors no-underline"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 9.75l-1.688 6.188c-.125.438-.438.563-.875.313l-2.5-1.813-1.188 1.125c-.125.125-.25.25-.5.25l.188-2.563 4.5-4c.188-.188-.063-.313-.313-.125l-5.5 3.438-2.375-.75c-.5-.125-.5-.5.125-.75l9.313-3.563c.438-.125.813.125.688.75z"/>
+            </svg>
+            Chrome Web Store
+          </a>
+          <a 
+            href="https://addons.mozilla.org/en-US/firefox/addon/freshjuice-hubspot-devtools/" 
+            target="_blank"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 dark:bg-[#1a1d27] text-white dark:text-gray-300 text-sm rounded-lg hover:bg-white/20 dark:hover:bg-[#242838] transition-colors no-underline"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0z"/>
+            </svg>
+            Firefox Add-ons
+          </a>
+        </div>
+      </div>
+      <div className="hidden lg:block lg:col-span-5">
+        <div className="relative">
+          <div className="absolute inset-0 bg-white/10 dark:bg-white/5 rounded-2xl blur-3xl"></div>
+          <div className="relative bg-white/20 dark:bg-[#242838]/50 backdrop-blur-sm rounded-2xl p-6 border border-white/30 dark:border-[#27272a] shadow-2xl">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 bg-white/30 dark:bg-[#1a1d27]/80 rounded-lg">
+                <div className="w-10 h-10 bg-[#559c1d] rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-white dark:text-gray-200">Debug Mode</div>
+                  <div className="text-xs text-white/70 dark:text-gray-400">hsDebug=true</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-4 bg-white/30 dark:bg-[#1a1d27]/80 rounded-lg">
+                <div className="w-10 h-10 bg-[#f1a431] rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-white dark:text-gray-200">Cache Buster</div>
+                  <div className="text-xs text-white/70 dark:text-gray-400">Fresh on every load</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-4 bg-white/30 dark:bg-[#1a1d27]/80 rounded-lg">
+                <div className="w-10 h-10 bg-[#f45100] rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-white dark:text-gray-200">Developer Mode</div>
+                  <div className="text-xs text-white/70 dark:text-gray-400">Backend access</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-Get your documentation site up and running in minutes.
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="text-center mb-12">
+    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Get started in minutes</h2>
+    <p className="text-lg text-gray-600 dark:text-gray-400">Install the extension and start debugging with just a few clicks</p>
+  </div>
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+  <Steps>
+    <Step title="Install the extension">
+      Install from the Chrome Web Store or Firefox Add-ons marketplace:
+      
+      - [Chrome Web Store](https://chromewebstore.google.com/detail/jmlcckldioeofjchfaomgaimhpnlfgok)
+      - [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/freshjuice-hubspot-devtools/)
+      
+      The extension will appear in your browser toolbar with the FreshJuice icon.
+    </Step>
+    
+    <Step title="Navigate to a HubSpot page">
+      Open any HubSpot CMS page you're working on. The extension automatically detects HubSpot domains.
+    </Step>
+    
+    <Step title="Toggle debug parameters">
+      Click the extension icon and toggle on any debug mode:
+      
+      - **Debug Mode** - Adds `hsDebug=true` to see HubL variable output
+      - **Cache Buster** - Adds `hsCacheBuster={timestamp}` to bypass caching
+      - **Developer Mode** - Adds `developerMode=true` for backend access
+      
+      The page will reload automatically with the selected parameters applied.
+    </Step>
+    
+    <Step title="Explore features">
+      The extension includes:
+      
+      - Auto-apply debug parameters to internal links
+      - Right-click context menus for quick access
+      - Keyboard shortcuts for power users
+      - Badge indicator showing active parameters
+      
+      <Note>
+      All settings are synced across your browser instances and persist across sessions.
+      </Note>
+    </Step>
+  </Steps>
+</div>
 
-## Make it yours
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="text-center mb-12">
+    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Powerful features for HubSpot developers</h2>
+    <p className="text-lg text-gray-600 dark:text-gray-400">Everything you need to debug and develop HubSpot CMS projects efficiently</p>
+  </div>
 
-Design a docs site that looks great and empowers your users.
+  <CardGroup cols={2}>
+    <Card title="Debug mode toggle" icon="bug" href="/features/debug-mode">
+      Instantly add hsDebug=true to see HubL variable output and template data on any page.
+    </Card>
+    <Card title="Cache buster" icon="rotate" href="/features/cache-buster">
+      Bypass HubSpot's caching with automatic timestamp parameters for fresh content on every reload.
+    </Card>
+    <Card title="Developer mode" icon="wrench" href="/features/developer-mode">
+      Enable developerMode=true for backend access and advanced debugging capabilities.
+    </Card>
+    <Card title="Auto-apply to links" icon="link" href="/features/auto-apply-links">
+      Automatically propagate debug parameters to internal links as you navigate.
+    </Card>
+    <Card title="Context menus" icon="mouse-pointer" href="/features/context-menus">
+      Right-click any page or link to quickly add debug parameters without opening the popup.
+    </Card>
+    <Card title="Keyboard shortcuts" icon="keyboard" href="/configuration/keyboard-shortcuts">
+      Toggle debug modes with customizable keyboard shortcuts for faster workflow.
+    </Card>
+  </CardGroup>
+</div>
 
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
-  </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
-  </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="text-center mb-12">
+    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Explore the documentation</h2>
+    <p className="text-lg text-gray-600 dark:text-gray-400">Learn how to make the most of the HubSpot DevTools extension</p>
+  </div>
 
-## Create beautiful pages
+  <CardGroup cols={3}>
+    <Card title="Configuration" icon="gear" href="/configuration/settings">
+      Customize extension behavior, manage allowed domains, and configure preferences.
+    </Card>
+    <Card title="Contributing" icon="code-branch" href="/development/contributing">
+      Help improve the extension by contributing code, reporting bugs, or suggesting features.
+    </Card>
+    <Card title="Architecture" icon="building" href="/development/project-structure">
+      Understand the extension's structure, manifest files, and content scripts.
+    </Card>
+  </CardGroup>
+</div>
 
-Everything you need to create world-class documentation.
-
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
-
-## Need inspiration?
-
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<div className="mt-20 mb-16 max-w-5xl mx-auto px-6">
+  <div className="bg-gradient-to-r from-[#f1a431] to-[#f45100] dark:from-[#242838] dark:to-[#1a1d27] rounded-2xl p-8 md:p-12 text-center border border-transparent dark:border-[#27272a] shadow-xl">
+    <h2 className="text-3xl md:text-4xl font-bold text-white dark:text-white mb-4">
+      Ready to supercharge your workflow?
+    </h2>
+    <p className="text-lg text-white/90 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+      Install the extension now and start debugging HubSpot CMS pages with ease.
+    </p>
+    <div className="flex flex-wrap justify-center gap-4">
+      <a 
+        href="/installation" 
+        className="inline-flex items-center px-8 py-4 bg-white dark:bg-[#1a1d27] text-[#f45100] dark:text-[#f1a431] font-semibold rounded-full hover:bg-gray-100 dark:hover:bg-[#242838] transition-all shadow-lg hover:shadow-xl no-underline"
+      >
+        Install Now
+        <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+      </a>
+      <a 
+        href="https://github.com/freshjuice-dev/hubspot-devtools-extension" 
+        target="_blank"
+        className="inline-flex items-center px-8 py-4 border-2 border-white/30 dark:border-[#27272a] bg-white/10 dark:bg-[#242838] text-white dark:text-gray-300 font-semibold rounded-full hover:bg-white/20 dark:hover:bg-[#2d3142] hover:border-white/50 dark:hover:border-[#f1a431] transition-all no-underline"
+      >
+        View on GitHub
+      </a>
+    </div>
+  </div>
+</div>

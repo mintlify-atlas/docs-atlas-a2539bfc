@@ -1,0 +1,142 @@
+---
+title: Keyboard Shortcuts
+description: Use keyboard shortcuts to quickly toggle HubSpot debug parameters
+---
+
+FreshJuice HubSpot DevTools provides keyboard shortcuts for quickly toggling debug parameters without opening the popup. These shortcuts work on any tab and will reload the page with the parameter added or removed.
+
+## Available Shortcuts
+
+The extension defines three keyboard commands:
+
+<CardGroup cols={1}>
+  <Card title="Toggle Debug Mode" icon="bug">
+    Adds or removes the `hsDebug=true` parameter from the current page URL.
+    
+    **Default**: Not assigned (must be configured manually)
+    
+    This enables HubSpot's debug mode, which adds helpful debugging information to your pages.
+  </Card>
+  
+  <Card title="Toggle Cache Buster" icon="rotate">
+    Adds or removes the `hsCacheBuster` parameter with a timestamp from the current page URL.
+    
+    **Default**: Not assigned (must be configured manually)
+    
+    This forces HubSpot to bypass cached versions of your modules and templates.
+  </Card>
+  
+  <Card title="Toggle Developer Mode" icon="code">
+    Adds or removes the `developerMode=true` parameter from the current page URL.
+    
+    **Default**: Not assigned (must be configured manually)
+    
+    This enables HubSpot's developer mode for additional development features.
+  </Card>
+</CardGroup>
+
+## How Shortcuts Work
+
+When you press a configured keyboard shortcut:
+
+1. The extension checks if the parameter is currently in the URL
+2. If present, it removes the parameter and reloads the page
+3. If absent, it:
+   - Adds the parameter to the URL
+   - Automatically adds the domain to your [allowed domains list](/configuration/allowed-domains)
+   - Reloads the page with the new parameter
+
+For the cache buster parameter specifically, the extension always uses the current timestamp (`Date.now()`) to ensure a unique value.
+
+## Configuring Shortcuts
+
+Browser extensions don't come with keyboard shortcuts pre-assigned by default. You need to configure them manually.
+
+### Chrome / Edge / Brave
+
+1. Navigate to `chrome://extensions/shortcuts` (or `edge://extensions/shortcuts` for Edge)
+2. Find **FreshJuice HubSpot DevTools** in the list
+3. Click the pencil icon next to each command to assign a shortcut
+4. Type your desired key combination (e.g., `Ctrl+Shift+D`, `Alt+D`, etc.)
+5. Click outside the field to save
+
+<Tip>
+  You can also access this page by:
+  - Clicking the menu icon (⋮) in the top-right of the Extensions page
+  - Selecting "Keyboard shortcuts" from the menu
+</Tip>
+
+### Firefox
+
+1. Navigate to `about:addons`
+2. Click the gear icon (⚙️) and select "Manage Extension Shortcuts"
+3. Find **FreshJuice HubSpot DevTools** in the list
+4. Click in the shortcut field for each command
+5. Press your desired key combination
+6. Changes are saved automatically
+
+<Info>
+  Firefox requires Firefox 140.0 or later for this extension. Earlier versions may not support all features.
+</Info>
+
+## Recommended Shortcuts
+
+Here are some suggested keyboard combinations that typically don't conflict with browser defaults:
+
+| Command | Chrome/Edge | Firefox | Description |
+|---------|-------------|---------|-------------|
+| Toggle Debug Mode | `Ctrl+Shift+D` | `Ctrl+Shift+D` | Easy to remember: D for Debug |
+| Toggle Cache Buster | `Ctrl+Shift+B` | `Ctrl+Shift+B` | Easy to remember: B for Buster |
+| Toggle Developer Mode | `Ctrl+Shift+E` | `Ctrl+Shift+E` | Easy to remember: E for dEvEloper |
+
+<Note>
+  On macOS, replace `Ctrl` with `Command` (`⌘`) for a more native feel.
+</Note>
+
+## Shortcut Limitations
+
+### Won't Work On
+
+Keyboard shortcuts won't function on:
+
+- Browser internal pages (`chrome://`, `about:`, `edge://`, etc.)
+- Extension store pages
+- `file://` URLs (local files)
+- New tab pages
+
+This is a browser security restriction that all extensions must follow.
+
+### Conflict Resolution
+
+If your chosen shortcut conflicts with:
+- **Browser shortcuts**: The browser shortcut takes priority
+- **Other extensions**: The first installed extension takes priority
+- **Web page shortcuts**: The extension shortcut takes priority
+
+If a shortcut doesn't work, try a different key combination.
+
+## Command Definitions
+
+The keyboard shortcuts are defined in the extension's manifest file:
+
+```json
+"commands": {
+  "toggle-debug": {
+    "description": "Toggle Debug Mode"
+  },
+  "toggle-cache-buster": {
+    "description": "Toggle Cache Buster"
+  },
+  "toggle-developer-mode": {
+    "description": "Toggle Developer Mode"
+  }
+}
+```
+
+These commands are handled by the background service worker in `background/background.js:542-579`.
+
+## Related
+
+- [Extension Settings](/configuration/settings) - Configure extension behavior
+- [Allowed Domains](/configuration/allowed-domains) - Manage domain whitelist
+- [Debug Mode](/features/debug-mode) - Learn what each parameter does

@@ -1,0 +1,428 @@
+---
+title: Content Scripts
+description: How content scripts modify links and propagate debug parameters across pages
+---
+
+Content scripts are JavaScript files injected into web pages to modify their behavior. In the FreshJuice HubSpot DevTools extension, the content script automatically adds debug parameters to links when you hover over them.
+
+## What Content Scripts Do
+
+The content script (`src/content/content-script.js`) performs these tasks:
+
+1. **Monitors link hover events** on the page
+2. **Detects active debug parameters** in the current URL
+3. **Modifies same-domain links** to include those parameters
+4. **Syncs with extension state** from storage and messages
+5. **Guards against multiple injections** when reloading
+
+This allows debug parameters to propagate automatically as you navigate between pages on the same domain.
+
+## Injection Mechanism
+
+Content scripts are injected in two ways:
+
+### 1. Declarative Injection (Manifest)
+
+Defined in the manifest for automatic injection:
+
+```json
+"content_scripts": [
+  {
+    "matches": ["<all_urls>"],
+    "js": [
+      "lib/browser-api.js",
+      "lib/url-params.js",
+      "content/content-script.js"
+    ],
+    "run_at": "document_idle"
+  }
+]
+```
+
+- **matches**: Injects into all URLs
+- **js**: Loads three scripts in order (dependencies first)
+- **run_at**: `document_idle` waits until page is fully loaded
+
+### 2. Dynamic Injection (Programmatic)
+
+The background script can also inject dynamically:
+
+```javascript
+// From background/background.js:514
+async function injectContentScript(tabId) {
+  try {
+    await browserAPI.scripting.executeScript({
+      target: { tabId },
+      files: ['lib/browser-api.js', 'lib/url-params.js', 'content/content-script.js']
+    });
+  } catch (error) {
+    console.error('Failed to inject content script:', error);
+  }
+}
+```
+
+This is used when:
+- Extension state changes (toggles are enabled)
+- User navigates to an allowed domain
+- Content script needs to be refreshed
+
+## How Link Modification Works
+
+The content script uses event delegation to efficiently monitor all links:
+
+```javascript
+// From content/content-script.js:254
+document.addEventListener('mouseover', handleMouseEnter, true);
+```
+
+### Step-by-Step Process
+
+**1. User hovers over a link**
+
+The `handleMouseEnter` function is triggered:
+
+```javascript
+// From content/content-script.js:149
+function handleMouseEnter(event) {
+  if (!isEnabled) return;
+
+  const link = event.target.closest('a');
+  if (!link) return;
+
+  const href = link.getAttribute('href');
+  if (!shouldModifyLink(href)) return;
+
+  // Get active params from current page URL
+  const params = getActiveParamsFromUrl();
+  if (Object.keys(params).length === 0) return;
+
+  // Store original href if not already stored
+  if (!link.dataset.hsOriginalHref) {
+    link.dataset.hsOriginalHref = link.href;
+  }
+
+  // Modify the URL
+  const newUrl = addParamsToUrl(link.href, params);
+  if (newUrl !== link.href) {
+    link.href = newUrl;
+  }
+}
+```
+
+**2. Check if modification is enabled**
+
+```javascript
+if (!isEnabled) return;
+```
+
+The script only modifies links when:
+- Auto-apply to links is enabled in settings
+- Current domain is in the allowed list
+- Current page URL has debug parameters
+
+See `/home/daytona/workspace/source/src/content/content-script.js:177` for the enable state logic.
+
+**3. Validate the link should be modified**
+
+```javascript
+// From content/content-script.js:102
+function shouldModifyLink(href) {
+  if (!href) return false;
+  if (href.startsWith('#')) return false;
+  if (href.startsWith('javascript:')) return false;
+  if (href.startsWith('mailto:')) return false;
+  if (href.startsWith('tel:')) return false;
+
+  try {
+    const url = new URL(href, window.location.origin);
+
+    // Only modify http(s) links
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
+
+    // Only modify same-domain links
+    if (!isSameDomain(url.hostname, window.location.hostname)) return false;
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+```
+
+This ensures:
+- Only HTTP/HTTPS links are modified
+- Only same-domain links (including www vs non-www)
+- Skips anchors, JavaScript, mailto, and tel links
+
+**4. Extract active parameters from current URL**
+
+```javascript
+// From content/content-script.js:76
+function getActiveParamsFromUrl() {
+  const params = {};
+
+  try {
+    const url = new URL(window.location.href);
+
+    if (typeof URL_PARAMS !== 'undefined') {
+      Object.entries(URL_PARAMS).forEach(([mode, { key, value }]) => {
+        if (url.searchParams.has(key)) {
+          // Use the value from URL or generate new one for dynamic values
+          params[key] = typeof value === 'function' ? value() : url.searchParams.get(key);
+        }
+      });
+    }
+  } catch (e) {
+    // Invalid URL
+  }
+
+  return params;
+}
+```
+
+This reads the current page's URL parameters:
+- `hsDebug=true`
+- `hsCacheBuster={timestamp}`
+- `developerMode=true`
+
+**5. Modify the link href**
+
+```javascript
+// From content/content-script.js:130
+function addParamsToUrl(href, params) {
+  try {
+    const url = new URL(href, window.location.origin);
+
+    Object.entries(params).forEach(([key, value]) => {
+      // Always set/update the param
+      url.searchParams.set(key, value);
+    });
+
+    return url.toString();
+  } catch {
+    return href;
+  }
+}
+```
+
+The original href is preserved in `link.dataset.hsOriginalHref` for reference.
+
+## Domain Checking
+
+The content script includes sophisticated domain matching to handle common variations:
+
+```javascript
+// From content/content-script.js:24
+function normalizeHostname(hostname) {
+  return hostname.toLowerCase().replace(/^www\./, '');
+}
+
+function isSameDomain(hostname1, hostname2) {
+  return normalizeHostname(hostname1) === normalizeHostname(hostname2);
+}
+```
+
+This ensures:
+- `example.com` and `www.example.com` are treated as the same domain
+- Case-insensitive comparison
+- Consistent behavior across different link formats
+
+## Allowed Domains Check
+
+Before modifying any links, the script verifies the current domain is allowed:
+
+```javascript
+// From content/content-script.js:43
+function isDomainAllowed(domains) {
+  if (!domains) return false;
+
+  const currentDomain = window.location.hostname.toLowerCase();
+  const allowedDomains = domains.allowedDomains || domains.whitelist || [];
+
+  if (allowedDomains.length === 0) {
+    return false;
+  }
+
+  return allowedDomains.some(domain =>
+    currentDomain === domain || currentDomain.endsWith('.' + domain)
+  );
+}
+```
+
+This supports:
+- Exact domain matches
+- Subdomain matches (e.g., `blog.example.com` matches `example.com`)
+
+## State Synchronization
+
+The content script stays synchronized with the extension through multiple mechanisms:
+
+### 1. Initial State Load
+
+```javascript
+// From content/content-script.js:197
+async function init() {
+  const api = (typeof browser !== 'undefined' && browser.runtime) ? browser :
+              (typeof chrome !== 'undefined' && chrome.runtime) ? chrome : null;
+
+  if (!api || !api.storage) return;
+
+  try {
+    const result = await api.storage.sync.get('state');
+    state = result.state;
+    updateEnabledState();
+  } catch (e) {
+    // Extension context may be invalidated, fail silently
+  }
+}
+```
+
+### 2. Message Listener
+
+```javascript
+// From content/content-script.js:223
+api.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  switch (message.action) {
+    case 'settingsChanged':
+      init();
+      break;
+
+    case 'activate':
+      state = message.state;
+      updateEnabledState();
+      break;
+
+    case 'deactivate':
+      isEnabled = false;
+      break;
+  }
+
+  sendResponse({ success: true });
+  return true;
+});
+```
+
+### 3. Storage Change Listener
+
+```javascript
+// From content/content-script.js:246
+api.storage.onChanged.addListener((changes, area) => {
+  if (area === 'sync' && changes.state) {
+    state = changes.state.newValue;
+    updateEnabledState();
+  }
+});
+```
+
+This ensures the content script updates when:
+- User toggles settings in the popup
+- User modifies allowed domains
+- Extension state changes in any tab
+
+## Multiple Injection Protection
+
+Content scripts can be injected multiple times during development or extension updates. Protection is added:
+
+```javascript
+// From content/content-script.js:9
+if (window.__hsDevToolsContentScript) {
+  window.__hsDevToolsContentScript.init();
+  return;
+}
+
+// ... script logic ...
+
+// From content/content-script.js:260
+window.__hsDevToolsContentScript = {
+  init: init
+};
+```
+
+When re-injected:
+1. Check if script already exists on the page
+2. If yes, re-run the initialization instead of registering new listeners
+3. If no, run the full script and register the flag
+
+This prevents:
+- Duplicate event listeners
+- Memory leaks
+- Conflicting behavior
+
+## Content Script Context
+
+Content scripts run in an isolated context with:
+
+**Access to**:
+- Full DOM of the web page
+- `window` and `document` objects
+- Extension APIs (`chrome.runtime`, `chrome.storage`)
+
+**No access to**:
+- JavaScript variables from the page
+- Functions defined by the website
+- Page's JavaScript context (isolated)
+
+**Communication**:
+- Messages to background script via `chrome.runtime.sendMessage()`
+- Storage via `chrome.storage.sync`
+- Cannot directly call popup or options page functions
+
+## Performance Considerations
+
+### Event Delegation
+
+Uses a single event listener on `document` instead of individual listeners per link:
+
+```javascript
+document.addEventListener('mouseover', handleMouseEnter, true);
+```
+
+Benefits:
+- Works with dynamically added links
+- Lower memory footprint
+- Better performance on pages with many links
+
+### Capture Phase
+
+The `true` parameter uses the capture phase, ensuring the event is caught before it reaches child elements.
+
+### Lazy Modification
+
+Links are only modified on hover, not on page load:
+- Doesn't slow down initial page rendering
+- Only processes links the user interacts with
+- Minimal performance impact
+
+## Debugging Content Scripts
+
+To debug the content script:
+
+1. **Open DevTools** on the web page (not the extension popup)
+2. **Check Console** for any error messages
+3. **Inspect Link Elements** to see `data-hs-original-href` attribute
+4. **Set Breakpoints** in `content-script.js` via Sources panel
+5. **Monitor Network Tab** to verify modified URLs are requested
+
+The content script logs errors silently to avoid disrupting the user experience.
+
+## Example Flow
+
+Complete example of link modification:
+
+```
+1. User visits: https://example.com/page?hsDebug=true
+2. Content script initializes
+3. Checks domain is allowed ✓
+4. Checks page has debug params ✓
+5. Sets isEnabled = true
+6. User hovers over: <a href="/other-page">Link</a>
+7. shouldModifyLink() validates link ✓
+8. getActiveParamsFromUrl() extracts: { hsDebug: 'true' }
+9. addParamsToUrl() creates: https://example.com/other-page?hsDebug=true
+10. Updates link.href
+11. User clicks link
+12. Browser navigates to URL with debug parameter
+13. Process repeats on new page
+```
+
+This creates a seamless debugging experience where parameters persist across navigation without manual intervention.

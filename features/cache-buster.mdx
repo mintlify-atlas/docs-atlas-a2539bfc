@@ -1,0 +1,223 @@
+---
+title: Cache Buster
+description: Force HubSpot to serve fresh content by bypassing browser and CDN caches
+---
+
+Cache Buster adds a unique timestamp parameter to your URLs, forcing HubSpot to serve fresh content instead of cached versions.
+
+## What It Does
+
+Cache Buster adds the `hsCacheBuster` parameter with a timestamp value to your URLs. This:
+- Bypasses browser cache
+- Bypasses CDN cache
+- Forces HubSpot to regenerate page content
+- Ensures you see the latest version of your content
+
+## How to Use It
+
+### Via Popup
+
+1. Click the FreshJuice extension icon
+2. Toggle **Cache Buster** on
+3. The page will reload with a timestamp parameter added
+
+### Via Context Menu
+
+1. Right-click anywhere on the page
+2. Select **FreshJuice HubSpot DevTools** → **Add Cache Buster**
+3. The page will reload with the parameter enabled
+
+### Via Keyboard Shortcut
+
+Use `Ctrl+Shift+C` (or `Cmd+Shift+C` on Mac) to toggle Cache Buster on the current page.
+
+## URL Parameter
+
+Cache Buster adds this parameter with a Unix timestamp:
+
+```
+hsCacheBuster=1709568000000
+```
+
+**Example URL:**
+```
+https://www.example.com/page?hsCacheBuster=1709568000000
+```
+
+The timestamp value is generated using `Date.now()` and changes every time:
+- You toggle Cache Buster on
+- You navigate to a new page (with persistence enabled)
+- A link is hovered (with auto-apply enabled)
+
+<Note>
+Unlike Debug Mode and Developer Mode which use static `true` values, Cache Buster generates a **new timestamp** on each navigation to ensure maximum cache-busting effectiveness.
+</Note>
+
+## Technical Details
+
+### Dynamic Value Generation
+
+From `src/lib/url-params.js:9`:
+
+```javascript
+const URL_PARAMS = {
+  cacheBuster: { key: 'hsCacheBuster', value: () => Date.now().toString() }
+};
+```
+
+The `value` is a function that generates a fresh timestamp each time it's called.
+
+### Application Logic
+
+When applying parameters (`src/popup/popup.js:187`):
+
+```javascript
+const { key, value } = URL_PARAMS[mode];
+params[key] = typeof value === 'function' ? value() : value;
+```
+
+### Persistence Behavior
+
+On each navigation with persistence enabled (`src/background/background.js:305`):
+
+```javascript
+if (mode === 'cacheBuster') {
+  // Always update cacheBuster with fresh timestamp on each navigation
+  const newTimestamp = Date.now().toString();
+  const currentValue = url.searchParams.get(paramKey);
+  if (currentValue !== newTimestamp) {
+    paramsToSet[paramKey] = newTimestamp;
+    needsUpdate = true;
+  }
+}
+```
+
+This ensures every page load gets a unique cache-busting value.
+
+## Use Cases
+
+### Testing Template Changes
+
+When you've updated a HubSpot template and want to see changes immediately:
+
+```
+1. Make changes to your template in HubSpot
+2. Enable Cache Buster
+3. Reload the page
+4. See your changes without waiting for cache expiration
+```
+
+### Debugging Caching Issues
+
+To determine if an issue is cache-related:
+
+```
+1. Observe the issue on the page
+2. Enable Cache Buster
+3. If the issue disappears, it was cache-related
+4. If it persists, investigate other causes
+```
+
+### Content Publishing Workflow
+
+When publishing new content or updates:
+
+```
+1. Publish changes in HubSpot
+2. Enable Cache Buster on the page
+3. Verify changes appear correctly
+4. Share the clean URL (without cache buster) with stakeholders
+```
+
+<Tip>
+Cache Buster is especially useful for CSS and JavaScript changes that tend to be heavily cached by browsers and CDNs.
+</Tip>
+
+## Fresh Timestamps on Every Navigation
+
+When **Persist across sessions** is enabled, Cache Buster behaves specially:
+
+1. Initial page load: `hsCacheBuster=1709568000000`
+2. Navigate to another page: `hsCacheBuster=1709568123456` (new timestamp)
+3. Navigate again: `hsCacheBuster=1709568234567` (another new timestamp)
+
+This ensures every page load bypasses the cache, even when navigating between pages on the same site.
+
+## Auto-Apply to Links
+
+When [Auto-Apply Links](/features/auto-apply-links) is enabled, hovering over same-domain links generates a **new timestamp** for each link (`src/content/content-script.js:86`):
+
+```javascript
+// Use the value from URL or generate new one for dynamic values
+params[key] = typeof value === 'function' ? value() : url.searchParams.get(key);
+```
+
+This means each link you click gets a fresh cache-busting value.
+
+## Removing Cache Buster
+
+To remove the cache buster parameter:
+
+1. **Toggle off in popup** - Removes parameter and reloads
+2. **Context menu** - Click "Remove Cache Buster"
+3. **Forget website** - Removes parameter and domain from allowed list
+4. **Manual URL edit** - Remove `&hsCacheBuster=...` from the URL
+
+<Warning>
+Cache Buster forces HubSpot to regenerate content on every request. While useful for development, it should not be used in production as it bypasses performance optimizations.
+</Warning>
+
+## Edge Cases
+
+### Parameter Already Exists
+
+If the URL already has `hsCacheBuster`, the extension will:
+- **Remove it** when toggling off
+- **Update it with a new timestamp** when toggling on or navigating
+
+### Combined with Other Parameters
+
+Cache Buster works alongside other debug parameters:
+
+```
+https://example.com?hsDebug=true&hsCacheBuster=1709568000000&developerMode=true
+```
+
+### Relative vs Absolute URLs
+
+The extension handles both:
+
+```javascript
+// Relative URL
+/page → /page?hsCacheBuster=1709568000000
+
+// Absolute URL  
+https://example.com/page → https://example.com/page?hsCacheBuster=1709568000000
+
+// Existing params
+/page?foo=bar → /page?foo=bar&hsCacheBuster=1709568000000
+```
+
+### Non-HubSpot Sites
+
+The `hsCacheBuster` parameter is HubSpot-specific. On non-HubSpot sites, it will be added to URLs but ignored by the server.
+
+## Performance Considerations
+
+Cache Buster impacts performance by:
+- Forcing server-side content regeneration
+- Preventing browser cache usage
+- Bypassing CDN edge caches
+- Increasing server load
+
+**Best practices:**
+- Enable only when actively developing or debugging
+- Disable when finished testing
+- Don't use on production sites for regular browsing
+
+## Related Features
+
+- [Debug Mode](/features/debug-mode) - Enable HubSpot debugging output
+- [Developer Mode](/features/developer-mode) - Enable HubSpot developer features
+- [Auto-Apply Links](/features/auto-apply-links) - Propagate cache buster to all same-domain links
+- [Context Menus](/features/context-menus) - Quick access to cache buster toggle

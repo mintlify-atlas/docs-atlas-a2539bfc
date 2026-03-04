@@ -1,80 +1,217 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Get from installation to your first debug parameter in under 5 minutes with this quickstart guide.
 ---
 
-## Get started in three steps
+This guide will walk you through using FreshJuice HubSpot DevTools for the first time. You'll learn how to toggle debug modes, understand the badge indicator, and use real HubSpot debug parameters.
 
-Get your documentation site running locally and make your first customization.
+## Prerequisites
 
-### Step 1: Set up your local environment
+Before starting, make sure you have:
+- Installed the extension ([installation guide](/installation))
+- A HubSpot CMS website to test with (development or staging environment recommended)
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+## Your first debug parameter
+
+<Steps>
+  <Step title="Navigate to a HubSpot page">
+    Open a page on your HubSpot CMS website in your browser. This could be:
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
+    - A page on your HubSpot-hosted site
+    - A template you're developing
+    - Your HubSpot Design Manager
     
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
+    The URL should be on a domain like `*.hs-sites.com` or your custom domain connected to HubSpot.
+  </Step>
+  
+  <Step title="Open the extension">
+    Click the FreshJuice HubSpot DevTools icon in your browser toolbar. The popup interface will appear.
+  </Step>
+  
+  <Step title="Enable debug mode">
+    Click the "Debug Mode" toggle in the popup. This will:
     
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    - Add `hsDebug=true` to your current page URL
+    - Reload the page automatically
+    - Add the domain to your allowed domains list
+    
+    Your URL will change from:
+    ```
+    https://example.com/page
+    ```
+    
+    To:
+    ```
+    https://example.com/page?hsDebug=true
+    ```
+  </Step>
+  
+  <Step title="Check the badge">
+    After the page reloads, look at the extension icon in your toolbar. You should see a green badge with the number "1" indicating one active debug parameter.
+  </Step>
+</Steps>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+Congratulations! You've successfully added your first debug parameter with the extension.
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+## Understanding debug parameters
 
-### Step 3: Go live
+The extension manages three primary debug parameters:
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+### hsDebug
+
+The `hsDebug=true` parameter enables HubSpot's debug mode, which:
+- Shows detailed error messages in HubL templates
+- Displays variable values and context information
+- Provides stack traces for debugging
+- Makes development and troubleshooting easier
+
+**Example URL:**
+```
+https://example.com/page?hsDebug=true
+```
+
+### hsCacheBuster
+
+The `hsCacheBuster={timestamp}` parameter bypasses HubSpot's caching system by adding a unique timestamp to each request. This ensures you see the latest version of your templates and assets.
+
+**Example URL:**
+```
+https://example.com/page?hsCacheBuster=1709568234567
+```
+
+<Note>
+The timestamp value is automatically generated each time you toggle the cache buster or navigate to a new page.
+</Note>
+
+### developerMode
+
+The `developerMode=true` parameter enables developer features in HubSpot's backend interfaces, including:
+- Additional debugging information in the Design Manager
+- Advanced settings and options
+- Backend developer tools
+
+**Example URL:**
+```
+https://example.com/page?developerMode=true
+```
+
+## Using multiple parameters
+
+You can enable multiple debug parameters simultaneously. Try this:
+
+<Steps>
+  <Step title="Open the extension popup">
+    Click the extension icon while on your HubSpot page.
+  </Step>
+  
+  <Step title="Enable all toggles">
+    Turn on all three toggles:
+    - Debug Mode
+    - Cache Buster
+    - BackOffice Dev Mode
+  </Step>
+  
+  <Step title="Check the combined URL">
+    Your URL will now include all three parameters:
+    
+    ```
+    https://example.com/page?hsDebug=true&hsCacheBuster=1709568234567&developerMode=true
+    ```
+  </Step>
+  
+  <Step title="Observe the badge">
+    The badge will now show "3" indicating three active parameters.
+  </Step>
+</Steps>
+
+## Auto-apply to links
+
+By default, the extension automatically propagates your debug parameters to internal links on the page. This means:
+
+- When you click a link to another page on the same domain
+- The debug parameters follow you to the new page
+- You don't need to manually re-enable them
+
+<Warning>
+If you navigate away from an allowed domain, the extension will not add parameters to that external domain for security reasons.
+</Warning>
+
+## Managing domains
+
+The extension tracks which domains you've enabled debugging on:
+
+### Enable a website
+
+When you enable any debug parameter, the domain is automatically added to your allowed domains list. You can also manually enable a website:
+
+1. Navigate to a page with debug parameters already in the URL
+2. Open the extension popup
+3. Click "Enable for this website"
+
+### Disable a website
+
+To remove a domain from your allowed list:
+
+1. Navigate to the domain you want to disable
+2. Open the extension popup
+3. Click "Forget this website"
+4. Confirm the action
+
+This will remove all debug parameters and reload the page with a clean URL.
+
+## Badge indicator
+
+The badge on the extension icon provides quick status information:
+
+| Badge | Meaning |
+|-------|--------|
+| No badge | No debug parameters active on current page |
+| Green "1" | One debug parameter active |
+| Green "2" | Two debug parameters active |
+| Green "3" | Three debug parameters active (all enabled) |
+
+The badge updates automatically as you:
+- Toggle parameters on/off
+- Navigate between pages
+- Switch browser tabs
+
+## Settings
+
+Click the "Settings" link in the extension popup to access additional options:
+
+- **Auto-apply to links**: Automatically add debug parameters to internal links
+- **Show badge**: Display the parameter count badge on the extension icon
+- **Persist across sessions**: Keep debug parameters active when navigating to new pages on allowed domains
+
+## Quick tips
+
+<CardGroup cols={2}>
+  <Card title="Click anywhere on cards" icon="hand-pointer">
+    You can click anywhere on a toggle card to enable/disable it, not just the switch itself
+  </Card>
+  
+  <Card title="Use keyboard shortcuts" icon="keyboard">
+    The extension supports keyboard shortcuts for toggling parameters (configure in browser settings)
+  </Card>
+  
+  <Card title="Right-click menu" icon="mouse-pointer">
+    Right-click on any page to access debug parameters through the context menu
+  </Card>
+  
+  <Card title="Check documentation" icon="book">
+    Use the HubL quick links in the popup for instant access to HubSpot documentation
+  </Card>
+</CardGroup>
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
+Now that you understand the basics:
 
-<CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
+1. **Test on your development sites**: Enable debug parameters on your HubSpot staging or development environments
+2. **Customize settings**: Adjust the extension behavior in the settings page
+3. **Explore HubL docs**: Use the quick links to learn more about HubL development
+4. **Share with your team**: Help other developers on your team install and use the extension
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+Remember to disable debug parameters on production sites. The extension makes it easy to toggle them on and off as needed.
 </Note>

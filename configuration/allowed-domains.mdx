@@ -1,0 +1,218 @@
+---
+title: Allowed Domains
+description: Control which domains FreshJuice HubSpot DevTools can modify
+---
+
+The allowed domains list (also called the domain whitelist) controls which websites the extension can modify. This is a security feature to ensure the extension only works on your HubSpot sites and doesn't interfere with other websites.
+
+## How It Works
+
+The extension checks the allowed domains list before:
+
+- Auto-applying debug parameters when navigating
+- Persisting parameters across page loads
+- Injecting content scripts
+- Showing the badge count
+- Auto-modifying links on the page
+
+If a domain isn't on the allowed list, the extension remains inactive on that site.
+
+## Automatic Domain Addition
+
+The extension automatically adds domains to your allowed list when you:
+
+1. **Toggle parameters via keyboard shortcuts** - When you use a keyboard shortcut to add a parameter, the current domain is automatically allowed
+2. **Toggle parameters via context menu** - When you right-click and add parameters via the context menu, the domain is automatically allowed
+3. **Toggle parameters via the popup** - When you enable a parameter from the extension popup, the domain is automatically allowed
+
+This auto-add behavior is defined in `background/background.js:345-358`:
+
+```javascript
+async function addDomainToAllowedList(hostname) {
+  if (!hostname) return;
+  
+  const domain = hostname.toLowerCase();
+  const result = await browserAPI.storage.sync.get('state');
+  const state = result.state || DEFAULT_STATE;
+  const allowedDomains = state.domains.allowedDomains || [];
+  
+  if (!allowedDomains.includes(domain)) {
+    allowedDomains.push(domain);
+    state.domains.allowedDomains = allowedDomains;
+    await browserAPI.storage.sync.set({ state });
+  }
+}
+```
+
+<Info>
+  The automatic addition happens in the background. You don't need to manually add domains unless you want to pre-authorize them.
+</Info>
+
+## Manual Domain Management
+
+You can manually add or remove domains from the settings page.
+
+### Adding Domains
+
+1. Open the extension settings (right-click icon → Options)
+2. Navigate to the **Settings** tab
+3. In the **Allowed Domains** section, add one domain per line
+4. Click **Save Settings**
+
+**Example:**
+```
+mysite.hs-sites.com
+customer.hubspot.com
+staging.example.com
+```
+
+### Removing Domains
+
+1. Open the extension settings
+2. Delete the domain line from the **Allowed Domains** textarea
+3. Click **Save Settings**
+
+### Resetting All Domains
+
+To clear all allowed domains:
+
+1. Open the extension settings
+2. Click **Reset to Defaults**
+3. Confirm the reset
+
+This will clear the entire allowed domains list and reset all other settings.
+
+<Warning>
+  Clearing the allowed domains list will prevent the extension from working until you add domains again (either manually or by toggling parameters).
+</Warning>
+
+## Subdomain Handling
+
+The extension uses suffix matching for subdomains. This means:
+
+- Adding `example.com` allows `example.com`, `www.example.com`, `staging.example.com`, etc.
+- Adding `staging.example.com` only allows `staging.example.com` and its subdomains like `app.staging.example.com`
+
+### Matching Logic
+
+From `background/background.js:366-375`:
+
+```javascript
+function isDomainAllowed(hostname, allowedDomains) {
+  if (!hostname || !allowedDomains || allowedDomains.length === 0) {
+    return false;
+  }
+  
+  const domain = hostname.toLowerCase();
+  return allowedDomains.some(allowed =>
+    domain === allowed || domain.endsWith('.' + allowed)
+  );
+}
+```
+
+This function:
+1. Converts the hostname to lowercase for case-insensitive matching
+2. Checks if the hostname exactly matches an allowed domain
+3. Checks if the hostname is a subdomain of an allowed domain
+
+### Examples
+
+| Allowed Domain | Will Match | Won't Match |
+|---------------|------------|-------------|
+| `example.com` | `example.com`<br/>`www.example.com`<br/>`staging.example.com`<br/>`app.staging.example.com` | `example.org`<br/>`notexample.com` |
+| `staging.example.com` | `staging.example.com`<br/>`app.staging.example.com` | `example.com`<br/>`www.example.com`<br/>`prod.example.com` |
+| `app.hubspot.com` | `app.hubspot.com` | `hubspot.com`<br/>`www.hubspot.com` |
+
+## Storage Format
+
+Domains are stored in the extension's sync storage as an array:
+
+```javascript
+{
+  domains: {
+    allowedDomains: [
+      "mysite.hs-sites.com",
+      "staging.example.com",
+      "customer.hubspot.com"
+    ]
+  }
+}
+```
+
+All domains are:
+- Stored in lowercase
+- Trimmed of whitespace
+- Validated to ensure they're not empty
+
+The parsing logic is in `options/options.js:132-137`:
+
+```javascript
+function parseDomainList(text) {
+  return text
+    .split('\n')
+    .map(line => line.trim().toLowerCase())
+    .filter(line => line.length > 0);
+}
+```
+
+## Common Use Cases
+
+### HubSpot CMS Developers
+
+If you develop on HubSpot CMS, you'll want to add:
+
+```
+hs-sites.com
+hubspot.com
+hubspotcms.com
+```
+
+This covers:
+- Preview domains (`*.hs-sites.com`)
+- Published domains (if using `*.hubspot.com` or `*.hubspotcms.com`)
+- App platform pages
+
+### Multiple Client Sites
+
+For agencies managing multiple client sites:
+
+```
+client1.hs-sites.com
+client2.hs-sites.com
+client3.com
+```
+
+Or simply add `hs-sites.com` to cover all preview domains.
+
+### Development Environments
+
+For testing across different environments:
+
+```
+localhost
+dev.example.com
+staging.example.com
+qa.example.com
+```
+
+<Note>
+  While you can add `localhost`, the extension typically only works on `http://` and `https://` URLs. Local HubSpot development isn't common, but the extension will work if you're proxying HubSpot pages.
+</Note>
+
+## Security Considerations
+
+The allowed domains list is a security feature that:
+
+1. **Prevents unintended modifications** - The extension won't modify URLs on non-HubSpot sites
+2. **Reduces performance impact** - Content scripts and parameter checking only run on allowed domains
+3. **Protects sensitive sites** - Banking, email, and other sensitive sites won't be affected
+
+<Tip>
+  Only add domains you trust and actively develop on. There's no need to add domains "just in case" — the extension will auto-add them when you first use it on a new site.
+</Tip>
+
+## Related
+
+- [Extension Settings](/configuration/settings) - Configure other extension preferences
+- [Persist Across Sessions](/configuration/settings#available-settings) - Learn how domain whitelisting enables parameter persistence
+- [Debug Mode](/features/debug-mode) - Understand what parameters the extension manages

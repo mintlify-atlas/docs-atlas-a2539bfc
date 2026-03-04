@@ -1,0 +1,146 @@
+---
+title: FAQ
+description: Frequently asked questions about FreshJuice HubSpot DevTools
+---
+
+Common questions and troubleshooting tips for the FreshJuice HubSpot DevTools extension.
+
+<Accordion title="How do I enable the extension on a new domain?">
+There are two ways to enable the extension on a new domain:
+
+1. **Automatic**: Toggle on any debug mode (Debug Mode, Cache Buster, or Developer Mode) - the extension will automatically add that domain to your allowed list.
+
+2. **Manual**: Click the "Enable for this website" button in the popup (this appears when you visit a page with debug parameters but the domain isn't yet in your allowed list).
+
+Once enabled, the extension will persist your debug mode settings across page navigation on that domain.
+</Accordion>
+
+<Accordion title="Why aren't debug parameters persisting when I navigate?">
+Debug parameters will only persist if:
+
+1. The domain is in your **allowed domains** list
+2. **Auto-apply to links** is enabled in settings (enabled by default)
+3. **Persist across sessions** is enabled in settings (enabled by default)
+4. You're navigating via internal links (not typing URLs directly in the address bar)
+
+If parameters aren't persisting, check your settings page and verify the domain is in your allowed list.
+</Accordion>
+
+<Accordion title="Which browsers are supported?">
+FreshJuice HubSpot DevTools supports:
+
+- **Chrome** (and Chromium-based browsers like Edge, Brave, Opera) - Manifest V3
+- **Firefox** - Manifest V3
+
+Both versions are available in their respective extension stores:
+- [Chrome Web Store](https://chromewebstore.google.com/detail/jmlcckldioeofjchfaomgaimhpnlfgok)
+- [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/freshjuice-hubspot-devtools/)
+</Accordion>
+
+<Accordion title="How do I uninstall or reset the extension?">
+**To reset settings:**
+1. Open the extension settings page
+2. Click the "Reset to Defaults" button at the bottom
+3. Confirm the reset
+
+This will clear all your preferences, toggle states, and allowed domains.
+
+**To uninstall completely:**
+- **Chrome**: Go to `chrome://extensions/`, find FreshJuice HubSpot DevTools, and click "Remove"
+- **Firefox**: Go to `about:addons`, find FreshJuice HubSpot DevTools, click the three dots, and select "Remove"
+</Accordion>
+
+<Accordion title="Why aren't keyboard shortcuts working?">
+Keyboard shortcuts require configuration in your browser:
+
+**Chrome/Edge/Brave:**
+1. Go to `chrome://extensions/shortcuts`
+2. Find "FreshJuice HubSpot DevTools"
+3. Set your preferred keyboard shortcuts for each debug mode
+
+**Firefox:**
+1. Go to `about:addons`
+2. Click the gear icon and select "Manage Extension Shortcuts"
+3. Find "FreshJuice HubSpot DevTools" and configure shortcuts
+
+<Note>
+Keyboard shortcuts are not set by default - you must configure them manually in your browser.
+</Note>
+</Accordion>
+
+<Accordion title="Why isn't the badge showing active parameters?">
+If the badge isn't displaying:
+
+1. Check that **Show Badge** is enabled in settings
+2. Verify you have at least one debug parameter active (Debug Mode, Cache Buster, or Developer Mode)
+3. The badge only shows on HTTP/HTTPS pages (not on browser special pages like `chrome://` or `about:`)
+
+The badge displays a number indicating how many debug parameters are currently active on the page.
+</Accordion>
+
+<Accordion title="How do I remove a domain from the allowed list?">
+There are two ways:
+
+1. **Quick method**: Click the extension popup while on that domain and click "Disable for this website"
+2. **Manual method**: Go to Settings, find the domain in the "Allowed Domains" textarea, delete it, and click "Save Settings"
+
+Removing a domain will clear all debug parameters from the current page and stop auto-applying them to links.
+</Accordion>
+
+<Accordion title="What debug parameters does the extension add?">
+The extension can add three debug parameters:
+
+- **Debug Mode** (`hsDebug=true`) - Enables HubSpot debug mode with detailed error messages
+- **Cache Buster** (`hsCacheBuster={timestamp}`) - Bypasses HubSpot caching with a unique timestamp
+- **BackOffice Developer Mode** (`developerMode=true`) - Enables developer mode in HubSpot's backend
+
+You can toggle each parameter independently via the popup or keyboard shortcuts.
+</Accordion>
+
+<Accordion title="Does the extension collect any data about me?">
+No. The extension does not collect, store, or transmit any personal data. All settings and preferences are stored locally in your browser using the browser's built-in sync storage.
+
+The only data that leaves your browser is when you click links to external resources (like HubSpot documentation or the FreshJuice blog), which include UTM parameters for attribution.
+
+See the [Privacy Policy](/reference/privacy) for complete details.
+</Accordion>
+
+<Accordion title="Can I use this extension on non-HubSpot websites?">
+Yes! While designed for HubSpot CMS developers, the extension works on any website. You can:
+
+- Add any domain to your allowed list
+- Apply debug parameters to any site
+- Use the auto-apply feature on internal navigation
+
+The debug parameters themselves (`hsDebug`, `hsCacheBuster`, `developerMode`) are HubSpot-specific and won't affect non-HubSpot sites.
+</Accordion>
+
+<Accordion title="How do I report a bug or request a feature?">
+We welcome feedback! To report bugs or request features:
+
+1. Visit the [GitHub Issues page](https://github.com/freshjuice-dev/hubspot-devtools-extension/issues)
+2. Check if your issue/request already exists
+3. If not, create a new issue with:
+   - **For bugs**: Browser version, extension version, OS, steps to reproduce, expected vs actual behavior
+   - **For features**: Description of the problem, proposed solution, any alternatives considered
+
+You can also contribute code via pull requests - the extension is fully open source!
+</Accordion>
+
+<Accordion title="Where can I find the HubL documentation links?">
+The extension provides quick access to HubL documentation in two places:
+
+1. **Popup**: Scroll down to the "Quick Links" section
+2. **Settings page**: Navigate to the "Resources" tab
+
+Available documentation links include:
+- HubL Functions
+- HubL Variables
+- HubL Filters
+- HubL If Statements
+- HubL Loops
+- HubDB documentation
+- HubSpot Design Manager
+
+All links include UTM parameters to help track usage from the extension.
+</Accordion>

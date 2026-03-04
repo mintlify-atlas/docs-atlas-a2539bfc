@@ -1,0 +1,340 @@
+---
+title: Testing
+description: Test and validate FreshJuice HubSpot DevTools browser extension
+---
+
+The extension uses multiple layers of testing and validation to ensure code quality and browser compatibility.
+
+## Unit Tests
+
+The project uses [Vitest](https://vitest.dev/) for unit testing.
+
+### Running Tests
+
+<CodeGroup>
+```bash Run once
+npm run test
+```
+
+```bash Watch mode
+npm run test:watch
+```
+</CodeGroup>
+
+### Test Configuration
+
+Tests are configured in `vitest.config.js`:
+
+```javascript
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    environment: 'node',
+    include: ['tests/**/*.test.js'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
+      include: ['src/lib/**/*.js']
+    }
+  }
+});
+```
+
+### Test Coverage
+
+Tests focus on the shared utilities in `src/lib/**/*.js`. Coverage reports are generated in both text and HTML formats.
+
+## Linting
+
+The project uses [ESLint](https://eslint.org/) with security plugins to catch code quality issues.
+
+### Running the Linter
+
+<CodeGroup>
+```bash Check for errors
+npm run lint
+```
+
+```bash Auto-fix issues
+npm run lint:fix
+```
+</CodeGroup>
+
+### Linting Rules
+
+The ESLint configuration (`eslint.config.js`) enforces:
+
+- **Security rules** via `eslint-plugin-security`
+  - Detects unsafe regex patterns
+  - Prevents eval and similar dangerous patterns
+  - Warns about potential timing attacks
+  - Catches buffer and child process issues
+
+- **JavaScript best practices**
+  - No `eval()` or `new Function()`
+  - No implied eval
+  - Modern ES2022 syntax
+
+### Example Security Rules
+
+```javascript
+rules: {
+  'security/detect-unsafe-regex': 'error',
+  'security/detect-eval-with-expression': 'error',
+  'security/detect-possible-timing-attacks': 'warn',
+  'no-eval': 'error',
+  'no-implied-eval': 'error',
+  'no-new-func': 'error',
+}
+```
+
+## Chrome Validation
+
+Validate the Chrome extension build with a custom validation script:
+
+```bash
+npm run validate:chrome
+```
+
+This command:
+
+<Steps>
+  <Step title="Builds the Chrome extension">
+    Runs `npm run build:chrome` first
+  </Step>
+  
+  <Step title="Validates manifest.json">
+    - Checks manifest version is 3
+    - Verifies required fields (name, version, description)
+    - Validates version format (X.Y.Z)
+    - Checks name length (max 45 characters)
+    - Checks description length (max 132 characters)
+  </Step>
+  
+  <Step title="Validates icons">
+    - Checks manifest icons exist (16, 32, 48, 128px)
+    - Validates action icons
+  </Step>
+  
+  <Step title="Validates service worker">
+    Ensures background service worker file exists
+  </Step>
+  
+  <Step title="Validates content scripts">
+    Verifies all content script files exist
+  </Step>
+  
+  <Step title="Validates popup">
+    Checks that popup HTML file exists
+  </Step>
+  
+  <Step title="Checks permissions">
+    Warns about potentially dangerous permissions
+  </Step>
+  
+  <Step title="Validates Manifest V3 compliance">
+    - Ensures no inline scripts in HTML files
+    - Checks for inline event handlers (not allowed in MV3)
+  </Step>
+</Steps>
+
+### Chrome Validator Output
+
+The validator provides detailed feedback:
+
+```bash
+🔍 Chrome Extension Validator
+========================================
+
+✅ Manifest version 3
+✅ Required fields present
+✅ Manifest icons validated
+✅ Action icons validated
+✅ Service worker exists
+✅ Content scripts validated
+✅ Popup exists
+✅ Permissions checked
+✅ No inline scripts detected
+
+========================================
+✅ Chrome extension validation passed!
+```
+
+## Firefox Validation
+
+Validate the Firefox extension build using Mozilla's official linter:
+
+```bash
+npm run validate:firefox
+```
+
+This command:
+
+<Steps>
+  <Step title="Builds the Firefox extension">
+    Runs `npm run build:firefox` first
+  </Step>
+  
+  <Step title="Runs addons-linter">
+    Uses Mozilla's [addons-linter](https://github.com/mozilla/addons-linter) to validate:
+    - Manifest structure
+    - File references
+    - Permission usage
+    - Firefox compatibility
+    - Security issues
+  </Step>
+</Steps>
+
+### addons-linter
+
+The official Mozilla tool checks for:
+
+- Valid JSON in manifest.json
+- Proper use of WebExtension APIs
+- Security vulnerabilities
+- Compatibility with Firefox versions
+- Missing or invalid files
+
+## Complete Validation Workflow
+
+Run all validations at once:
+
+```bash
+npm run validate
+```
+
+This comprehensive command executes the full validation workflow:
+
+<Steps>
+  <Step title="Run linting">
+    ```bash
+    npm run lint
+    ```
+    Checks all source files for code quality and security issues
+  </Step>
+  
+  <Step title="Run unit tests">
+    ```bash
+    npm run test
+    ```
+    Executes all unit tests to ensure functionality
+  </Step>
+  
+  <Step title="Validate Chrome build">
+    ```bash
+    npm run validate:chrome
+    ```
+    Builds and validates Chrome extension
+  </Step>
+  
+  <Step title="Validate Firefox build">
+    ```bash
+    npm run validate:firefox
+    ```
+    Builds and validates Firefox extension
+  </Step>
+</Steps>
+
+## Integration with Release Process
+
+The complete validation is run automatically during the release process:
+
+```bash
+npm run release
+```
+
+This ensures all code quality checks pass before creating distribution packages.
+
+## Continuous Integration
+
+For CI/CD pipelines, use the validate command:
+
+```yaml
+# Example GitHub Actions workflow
+- name: Install dependencies
+  run: npm install
+
+- name: Run validation
+  run: npm run validate
+```
+
+## Writing Tests
+
+Tests are located in the `tests/` directory:
+
+```
+tests/
+└── url-params.test.js
+```
+
+### Example Test Structure
+
+```javascript
+import { describe, it, expect } from 'vitest';
+import { someFunction } from '../src/lib/utils.js';
+
+describe('URL Parameter Handling', () => {
+  it('should add debug parameter to URL', () => {
+    const url = 'https://example.com';
+    const result = addDebugParam(url);
+    expect(result).toBe('https://example.com?hsDebug=true');
+  });
+
+  it('should preserve existing parameters', () => {
+    const url = 'https://example.com?foo=bar';
+    const result = addDebugParam(url);
+    expect(result).toBe('https://example.com?foo=bar&hsDebug=true');
+  });
+});
+```
+
+## Troubleshooting
+
+### Tests Failing
+
+If tests fail:
+
+- Check test output for specific failure messages
+- Ensure dependencies are installed: `npm install`
+- Verify test files are in `tests/**/*.test.js`
+- Run in watch mode for faster debugging: `npm run test:watch`
+
+### Linting Errors
+
+If linting fails:
+
+- Review the error messages for specific issues
+- Try auto-fix: `npm run lint:fix`
+- Check that you're not using `eval()` or similar dangerous patterns
+- Ensure proper indentation and syntax
+
+### Validation Failures
+
+If browser validation fails:
+
+- **Chrome**: Check the validator output for specific errors
+  - Verify all referenced files exist
+  - Ensure no inline scripts in HTML
+  - Check manifest field values
+
+- **Firefox**: Review addons-linter output
+  - Check for Firefox-specific API compatibility
+  - Verify `browser_specific_settings` in manifest
+  - Ensure all permissions are valid
+
+### Build Not Found
+
+If validation says build not found:
+
+```bash
+# Build first, then validate
+npm run build:chrome
+npm run validate:chrome
+```
+
+Or use the validation command which builds automatically:
+
+```bash
+npm run validate:chrome  # Builds and validates
+```

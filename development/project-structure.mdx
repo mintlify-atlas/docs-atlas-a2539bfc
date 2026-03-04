@@ -1,0 +1,181 @@
+---
+title: Project Structure
+description: Understanding the FreshJuice HubSpot DevTools extension architecture and directory layout
+---
+
+The FreshJuice HubSpot DevTools extension follows a modular architecture that separates concerns across different directories. This structure supports both Chrome and Firefox builds from a single codebase.
+
+## Source Directory Tree
+
+The `src/` directory contains all source code for the extension:
+
+```
+src/
+├── manifest/        # Browser-specific manifest files
+│   ├── base.json    # Shared manifest configuration
+│   ├── chrome.json  # Chrome-specific manifest (MV3)
+│   └── firefox.json # Firefox-specific manifest (MV3)
+├── popup/           # Extension popup UI
+│   ├── popup.html   # Popup HTML structure
+│   ├── popup.css    # Popup styles
+│   └── popup.js     # Popup logic and interactions
+├── options/         # Settings page
+│   ├── options.html # Settings page HTML
+│   ├── options.css  # Settings page styles
+│   └── options.js   # Settings page logic
+├── background/      # Service worker / background script
+│   └── background.js # Background script (MV3)
+├── content/         # Content script for link modification
+│   └── content-script.js # Injected into web pages
+├── lib/             # Shared utilities
+│   ├── browser-api.js # Cross-browser API wrapper
+│   ├── storage.js   # Storage utilities
+│   └── url-params.js # URL parameter utilities
+└── assets/          # Icons and images
+    └── icons/
+        ├── icon-16.png
+        ├── icon-32.png
+        ├── icon-48.png
+        └── icon-128.png
+```
+
+## Directory Purpose
+
+### `/manifest`
+
+Contains the manifest file configuration split into three files:
+- **base.json**: Common properties shared across all browsers
+- **chrome.json**: Complete Chrome manifest with MV3 specifications
+- **firefox.json**: Complete Firefox manifest with browser-specific settings
+
+During build, these are merged to create the final `manifest.json` for each browser.
+
+### `/popup`
+
+The extension popup that appears when clicking the browser action icon. Contains:
+- Toggle switches for debug modes (hsDebug, cacheBuster, developerMode)
+- Quick links to HubL documentation
+- Website enable/disable controls
+- Settings page access
+
+See `/home/daytona/workspace/source/src/popup/popup.js:1` for the main popup logic.
+
+### `/options`
+
+The settings/options page accessible from the popup. Provides:
+- Auto-apply to links toggle
+- Badge visibility settings
+- Persist across sessions toggle
+- Domain allowlist management
+
+### `/background`
+
+Manifest V3 service worker that handles:
+- Badge updates based on active parameters
+- Context menu management
+- Cross-tab messaging
+- Persistent parameter application
+- Content script injection
+
+See `/home/daytona/workspace/source/src/background/background.js:1` for implementation details.
+
+### `/content`
+
+Content scripts injected into web pages to:
+- Monitor link hover events
+- Automatically add debug parameters to same-domain links
+- Sync with extension state
+
+See [Content Scripts](/development/content-scripts) for detailed documentation.
+
+### `/lib`
+
+Shared utility modules used across different contexts:
+
+**browser-api.js**: Cross-browser compatibility layer
+```javascript
+// Detects and provides consistent API between Chrome and Firefox
+const browserAPI = (typeof browser !== 'undefined' && browser.runtime) ? browser : chrome;
+```
+
+**url-params.js**: URL parameter definitions and utilities
+```javascript
+const URL_PARAMS = {
+  hsDebug: { key: 'hsDebug', value: 'true' },
+  cacheBuster: { key: 'hsCacheBuster', value: () => Date.now().toString() },
+  developerMode: { key: 'developerMode', value: 'true' }
+};
+```
+
+**storage.js**: Storage helpers for managing extension state
+
+### `/assets`
+
+Static resources including extension icons in multiple sizes required by browser stores.
+
+## Build Output Structure
+
+When you run `npm run build:chrome` or `npm run build:firefox`, the build process creates:
+
+```
+dist/
+├── chrome/          # Chrome build output
+│   ├── manifest.json
+│   ├── popup/
+│   ├── options/
+│   ├── background/
+│   ├── content/
+│   ├── lib/
+│   └── assets/
+└── firefox/         # Firefox build output
+    ├── manifest.json
+    ├── popup/
+    ├── options/
+    ├── background/
+    ├── content/
+    ├── lib/
+    └── assets/
+```
+
+The build process:
+1. Copies all source files to the appropriate browser directory
+2. Merges manifest files specific to each browser
+3. Optimizes assets
+4. Validates the extension package
+
+## Key Files and Their Roles
+
+| File | Purpose | Context |
+|------|---------|--------|
+| `background/background.js` | Service worker, handles background tasks | Background (MV3) |
+| `content/content-script.js` | Modifies links on hover | Content Script |
+| `popup/popup.js` | Main UI logic and toggle controls | Popup |
+| `options/options.js` | Settings page management | Options Page |
+| `lib/browser-api.js` | Cross-browser compatibility | All contexts |
+| `lib/url-params.js` | URL parameter definitions | All contexts |
+| `lib/storage.js` | Storage utilities | All contexts |
+
+## Manifest V3 Architecture
+
+This extension uses Manifest V3 (MV3), the latest extension platform:
+
+- **Service Worker**: Replaces persistent background pages with an event-driven service worker
+- **Declarative Permissions**: Uses `host_permissions` instead of broad `permissions`
+- **Scripting API**: Uses `chrome.scripting.executeScript()` for dynamic content injection
+- **Action API**: Uses `chrome.action` instead of `browserAction`
+
+See [Manifest Files](/development/manifest-files) for detailed manifest configuration.
+
+## Development Workflow
+
+1. **Make changes** in `src/` directory
+2. **Build** with `npm run build:chrome` or `npm run build:firefox`
+3. **Load** the extension from `dist/chrome/` or `dist/firefox/`
+4. **Test** on target browser
+5. **Validate** with `npm run validate`
+
+For faster development, use watch mode:
+```bash
+npm run dev:chrome   # Rebuilds on file changes
+npm run dev:firefox  # Rebuilds on file changes
+```

@@ -1,0 +1,74 @@
+---
+title: Introduction
+description: FreshJuice HubSpot DevTools is a browser extension that gives HubSpot CMS developers quick access to debug parameters and development tools.
+---
+
+FreshJuice HubSpot DevTools is a browser extension designed specifically for HubSpot CMS developers. It provides instant access to essential debug parameters, cache busting tools, and HubL documentation right from your browser toolbar.
+
+## What it does
+
+The extension eliminates the need to manually add debug parameters to URLs during HubSpot CMS development. With one click, you can toggle debug modes, bust caches, and access backend developer settings without typing query parameters.
+
+<CardGroup cols={2}>
+  <Card title="Debug mode toggle" icon="bug">
+    Quickly add `hsDebug=true` to your current page to see detailed debug information
+  </Card>
+  <Card title="Cache buster" icon="rotate">
+    Add `hsCacheBuster={timestamp}` to bypass HubSpot's caching system
+  </Card>
+  <Card title="BackOffice dev mode" icon="code">
+    Enable `developerMode=true` for accessing HubSpot backend features
+  </Card>
+  <Card title="Auto-apply to links" icon="link">
+    Automatically propagate debug parameters to internal links on the page
+  </Card>
+</CardGroup>
+
+## Key features
+
+### Badge indicator
+
+The extension displays a badge on the toolbar icon showing how many debug parameters are currently active on the page. This gives you instant visibility into your development environment state.
+
+### Domain management
+
+You control which domains the extension manages. When you enable a debug parameter, the domain is automatically added to your allowed list. This prevents accidental parameter injection on non-development sites.
+
+### Session persistence
+
+Debug parameters can persist across page navigations on allowed domains. Navigate through your HubSpot site without losing your debug settings.
+
+### HubL quick links
+
+Get fast access to HubL documentation for:
+- Functions
+- Variables
+- Filters
+- Loops
+- If statements
+- HubDB
+
+Plus one-click access to HubSpot Design Manager.
+
+## Who it's for
+
+This extension is built for HubSpot CMS developers who:
+- Build and maintain HubSpot CMS websites
+- Debug HubL templates and modules
+- Need frequent access to HubSpot's debug modes
+- Want to streamline their development workflow
+
+<Note>
+The extension works on both Chrome and Firefox browsers and does not collect any personal data.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install the extension from the Chrome Web Store or Firefox Add-ons
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get from installation to your first debug parameter in under 5 minutes
+  </Card>
+</CardGroup>

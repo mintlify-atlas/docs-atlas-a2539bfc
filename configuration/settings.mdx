@@ -1,0 +1,109 @@
+---
+title: Extension Settings
+description: Configure FreshJuice HubSpot DevTools preferences and behavior
+---
+
+The extension provides several settings to customize how it behaves. Access the settings page by right-clicking the extension icon and selecting "Options" or by navigating to your browser's extension management page.
+
+## Accessing Settings
+
+There are two ways to access the settings page:
+
+1. **From the Extension Icon**
+   - Right-click the FreshJuice HubSpot DevTools icon in your browser toolbar
+   - Select "Options" from the context menu
+
+2. **From Browser Extensions Page**
+   - **Chrome**: Navigate to `chrome://extensions`, find FreshJuice HubSpot DevTools, and click "Details" → "Extension options"
+   - **Firefox**: Navigate to `about:addons`, find FreshJuice HubSpot DevTools, and click "Options"
+
+## Available Settings
+
+The extension includes three main settings that control its behavior:
+
+<ParamField path="autoApplyToLinks" type="boolean" default="true">
+  **Auto-Apply to Links**
+  
+  When enabled, the extension automatically applies debug parameters to all HubSpot links on allowed domains when you click them. This saves you from having to manually add parameters to each link.
+  
+  - **Enabled**: Links are automatically modified to include active debug parameters
+  - **Disabled**: Links remain unchanged; you must manually add parameters via the popup or keyboard shortcuts
+</ParamField>
+
+<ParamField path="showBadge" type="boolean" default="true">
+  **Show Badge**
+  
+  Controls whether the extension displays a badge on its icon showing the number of active debug parameters on the current page.
+  
+  - **Enabled**: Badge shows count of active parameters (e.g., "3" if all three parameters are active)
+  - **Disabled**: No badge is displayed, keeping your toolbar clean
+  
+  The badge only appears on allowed domains with at least one active parameter. The badge background color is green (`#16a34a`) when parameters are active.
+</ParamField>
+
+<ParamField path="persistAcrossSessions" type="boolean" default="true">
+  **Persist Across Sessions**
+  
+  Determines whether debug parameters should automatically be applied when navigating to new pages on allowed domains.
+  
+  - **Enabled**: Active parameters are automatically added to pages as you browse
+  - **Disabled**: Parameters are only applied when you explicitly toggle them
+  
+  When enabled, the extension will:
+  - Preserve your active debug modes across page navigations
+  - Automatically refresh the cache buster timestamp on each navigation
+  - Only apply to domains in your allowed list
+</ParamField>
+
+## Settings Storage
+
+All settings are stored using your browser's sync storage (`chrome.storage.sync`), which means:
+
+- Settings sync across all devices where you're signed into your browser
+- Settings persist even if you close and reopen your browser
+- Maximum storage limit is typically 100KB (more than enough for these settings)
+
+## Default State
+
+The extension initializes with the following default configuration:
+
+```javascript
+{
+  modes: {
+    hsDebug: false,
+    cacheBuster: false,
+    developerMode: false
+  },
+  settings: {
+    autoApplyToLinks: true,
+    showBadge: true,
+    persistAcrossSessions: true
+  },
+  domains: {
+    allowedDomains: []
+  }
+}
+```
+
+## Resetting Settings
+
+To reset all settings to their defaults:
+
+1. Open the settings page
+2. Click the **Reset to Defaults** button
+3. Confirm the reset when prompted
+
+This will:
+- Reset all three settings to their default values (all enabled)
+- Clear your allowed domains list
+- Turn off all active debug modes
+
+<Warning>
+  Resetting settings cannot be undone. Make note of your allowed domains before resetting if you want to restore them later.
+</Warning>
+
+## Related
+
+- [Keyboard Shortcuts](/configuration/keyboard-shortcuts) - Configure shortcuts for quick parameter toggling
+- [Allowed Domains](/configuration/allowed-domains) - Manage which domains the extension works on
+- [Debug Mode](/features/debug-mode) - Learn about the available debug parameters

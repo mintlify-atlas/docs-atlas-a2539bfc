@@ -1,0 +1,282 @@
+---
+title: Building
+description: Build FreshJuice HubSpot DevTools browser extension for Chrome and Firefox
+---
+
+The build system compiles the extension for both Chrome and Firefox browsers using Manifest V3.
+
+## Prerequisites
+
+Ensure you have Node.js 22 or higher installed:
+
+```bash
+node --version
+```
+
+## Build Scripts
+
+The extension provides several build commands for different scenarios:
+
+### Build for Specific Browser
+
+<CodeGroup>
+```bash Chrome
+npm run build:chrome
+```
+
+```bash Firefox
+npm run build:firefox
+```
+</CodeGroup>
+
+These commands build the extension for a specific browser and output to `dist/chrome/` or `dist/firefox/`.
+
+### Build for All Browsers
+
+```bash
+npm run build:all
+```
+
+Builds for both Chrome and Firefox sequentially. This is equivalent to running:
+
+```bash
+npm run build:chrome && npm run build:firefox
+```
+
+### Generic Build
+
+```bash
+npm run build
+```
+
+The base build command builds for all browsers by default.
+
+## Watch Mode for Development
+
+During development, use watch mode to automatically rebuild when source files change:
+
+<CodeGroup>
+```bash Chrome
+npm run dev:chrome
+```
+
+```bash Firefox
+npm run dev:firefox
+```
+
+```bash All browsers
+npm run dev
+```
+</CodeGroup>
+
+Watch mode uses [chokidar](https://github.com/paulmillr/chokidar) to monitor the `src/` directory and triggers a rebuild on any file changes.
+
+## Build Process
+
+The build script (`scripts/build.js`) performs the following steps:
+
+<Steps>
+  <Step title="Clean the distribution directory">
+    Empties the target `dist/{browser}/` directory to ensure a fresh build
+  </Step>
+  
+  <Step title="Copy source files">
+    Copies the following directories to the distribution folder:
+    - `popup/` - Extension popup UI
+    - `options/` - Settings page
+    - `content/` - Content scripts
+    - `background/` - Service worker
+    - `lib/` - Shared utilities
+    - `assets/` - Icons and images
+  </Step>
+  
+  <Step title="Merge manifests">
+    Combines `manifest/base.json` with browser-specific manifest (`manifest/chrome.json` or `manifest/firefox.json`) using deep merge
+  </Step>
+  
+  <Step title="Write final manifest">
+    Outputs the merged `manifest.json` to the distribution directory
+  </Step>
+</Steps>
+
+### Deep Merge Strategy
+
+The build process uses deep merging to combine manifests:
+
+```javascript
+// Base manifest (shared config)
+{
+  "manifest_version": 3,
+  "name": "FreshJuice HubSpot DevTools",
+  "permissions": ["storage", "activeTab"]
+}
+
+// Chrome-specific overrides
+{
+  "background": {
+    "service_worker": "background/background.js"
+  }
+}
+
+// Firefox-specific overrides
+{
+  "background": {
+    "scripts": ["background/background.js"]
+  },
+  "browser_specific_settings": {
+    "gecko": { "id": "extension@freshjuice.dev" }
+  }
+}
+```
+
+## Creating Release Zips
+
+To package the extension for distribution:
+
+<CodeGroup>
+```bash Single browser
+# Chrome
+npm run zip:chrome
+
+# Firefox
+npm run zip:firefox
+```
+
+```bash All browsers
+npm run zip:all
+```
+</CodeGroup>
+
+Zip files are created with the naming convention: `hubspot-devtools-{browser}-{version}.zip`
+
+## Complete Release Build
+
+For a production release, use the release command:
+
+```bash
+npm run release
+```
+
+This command executes the following workflow:
+
+<Steps>
+  <Step title="Clean previous builds">
+    ```bash
+    npm run clean
+    ```
+    Removes the entire `dist/` directory
+  </Step>
+  
+  <Step title="Run validation">
+    ```bash
+    npm run validate
+    ```
+    Runs linting, tests, and browser-specific validations
+  </Step>
+  
+  <Step title="Build all browsers">
+    ```bash
+    npm run build:all
+    ```
+    Creates distribution builds for Chrome and Firefox
+  </Step>
+  
+  <Step title="Create zip archives">
+    ```bash
+    npm run zip:all
+    ```
+    Packages both browsers into zip files ready for upload to stores
+  </Step>
+</Steps>
+
+## Output Structure
+
+After building, your `dist/` directory will look like:
+
+```
+dist/
+├── chrome/
+│   ├── manifest.json
+│   ├── popup/
+│   ├── options/
+│   ├── background/
+│   ├── content/
+│   ├── lib/
+│   └── assets/
+└── firefox/
+    ├── manifest.json
+    ├── popup/
+    ├── options/
+    ├── background/
+    ├── content/
+    ├── lib/
+    └── assets/
+```
+
+## Manual Installation for Testing
+
+### Chrome
+
+<Steps>
+  <Step title="Build the extension">
+    ```bash
+    npm run build:chrome
+    ```
+  </Step>
+  
+  <Step title="Open Chrome extensions">
+    Navigate to `chrome://extensions/`
+  </Step>
+  
+  <Step title="Enable Developer mode">
+    Toggle the "Developer mode" switch in the top right
+  </Step>
+  
+  <Step title="Load unpacked extension">
+    Click "Load unpacked" and select the `dist/chrome/` directory
+  </Step>
+</Steps>
+
+### Firefox
+
+<Steps>
+  <Step title="Build the extension">
+    ```bash
+    npm run build:firefox
+    ```
+  </Step>
+  
+  <Step title="Open Firefox debugging">
+    Navigate to `about:debugging#/runtime/this-firefox`
+  </Step>
+  
+  <Step title="Load temporary add-on">
+    Click "Load Temporary Add-on" and select any file in `dist/firefox/` (e.g., `manifest.json`)
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### Build Fails
+
+If the build fails, check:
+
+- Node.js version is 22 or higher
+- Dependencies are installed: `npm install`
+- No syntax errors in source files
+
+### Manifest Errors
+
+If you see manifest validation errors:
+
+- Verify `manifest/base.json` has valid JSON
+- Check browser-specific manifests for conflicts
+- Run validation: `npm run validate:chrome` or `npm run validate:firefox`
+
+### Watch Mode Not Triggering
+
+If watch mode doesn't rebuild on changes:
+
+- Ensure you're editing files in the `src/` directory
+- Check that the file isn't in `node_modules/`
+- Restart watch mode with Ctrl+C and run again

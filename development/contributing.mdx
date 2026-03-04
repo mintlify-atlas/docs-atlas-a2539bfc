@@ -1,0 +1,188 @@
+---
+title: Contributing
+description: Learn how to contribute to FreshJuice HubSpot DevTools browser extension
+---
+
+We welcome contributions from the community! Whether you're reporting bugs, suggesting features, or submitting code, here's how you can help.
+
+## Reporting Bugs
+
+Found a bug? Please [open an issue](https://github.com/freshjuice-dev/hubspot-devtools-extension/issues/new?template=bug_report.md) with the following information:
+
+<Steps>
+  <Step title="Browser details">
+    Include your browser name and version (Chrome, Firefox, etc.)
+  </Step>
+  
+  <Step title="Extension version">
+    Specify the version of FreshJuice HubSpot DevTools you're using
+  </Step>
+  
+  <Step title="Operating system">
+    Mention your OS (Windows, macOS, Linux)
+  </Step>
+  
+  <Step title="Steps to reproduce">
+    Provide clear, step-by-step instructions to reproduce the issue
+  </Step>
+  
+  <Step title="Expected vs actual behavior">
+    Describe what you expected to happen and what actually happened
+  </Step>
+</Steps>
+
+## Suggesting Features
+
+Have an idea for a new feature? [Submit a feature request](https://github.com/freshjuice-dev/hubspot-devtools-extension/issues/new?template=feature_request.md) describing:
+
+- **The problem** - What problem are you trying to solve?
+- **Your proposed solution** - How would you like it to work?
+- **Alternatives considered** - What other approaches did you think about?
+
+## Pull Request Process
+
+Want to contribute code? Great! Follow these steps:
+
+<Steps>
+  <Step title="Fork the repository">
+    Create your own fork of the [hubspot-devtools-extension](https://github.com/freshjuice-dev/hubspot-devtools-extension) repository
+  </Step>
+  
+  <Step title="Create a feature branch">
+    ```bash
+    git checkout -b feature/amazing-feature
+    ```
+  </Step>
+  
+  <Step title="Make your changes">
+    Implement your feature or bug fix following the code style guidelines below
+  </Step>
+  
+  <Step title="Test on both browsers">
+    Test your changes on both Chrome and Firefox to ensure compatibility
+  </Step>
+  
+  <Step title="Commit your changes">
+    ```bash
+    git commit -m 'Add amazing feature'
+    ```
+  </Step>
+  
+  <Step title="Push to your fork">
+    ```bash
+    git push origin feature/amazing-feature
+    ```
+  </Step>
+  
+  <Step title="Open a Pull Request">
+    Submit a PR from your fork to the main repository
+  </Step>
+</Steps>
+
+## Code Style Guidelines
+
+The project uses ESLint for code quality and security checks. Follow these guidelines:
+
+### Security Rules
+
+The project enforces strict security rules using `eslint-plugin-security`:
+
+```javascript
+// ❌ Avoid eval and similar patterns
+no-eval: 'error'
+no-implied-eval: 'error'
+no-new-func: 'error'
+
+// ❌ Don't use unsafe regex
+security/detect-unsafe-regex: 'error'
+
+// ⚠️  Be cautious with timing attacks
+security/detect-possible-timing-attacks: 'warn'
+```
+
+### ECMAScript Version
+
+The codebase uses **ES2022** with **ES modules**:
+
+```javascript
+// ✅ Use ES modules
+import { someFunction } from './module.js';
+
+// ✅ Use modern JavaScript features
+const data = await fetchData();
+const merged = { ...defaults, ...options };
+```
+
+### Browser Compatibility
+
+Support both Chrome and Firefox (Manifest V3):
+
+<CodeGroup>
+```javascript Chrome
+// Use chrome API
+chrome.storage.local.get(['key'], (result) => {
+  console.log(result);
+});
+```
+
+```javascript Firefox
+// Use browser API
+const result = await browser.storage.local.get(['key']);
+console.log(result);
+```
+
+```javascript Cross-browser
+// Use the browserAPI helper for cross-browser compatibility
+const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
+```
+</CodeGroup>
+
+### Linting Your Code
+
+Before submitting a PR, ensure your code passes linting:
+
+```bash
+# Check for linting errors
+npm run lint
+
+# Auto-fix issues where possible
+npm run lint:fix
+```
+
+## Project Structure
+
+Understand the codebase organization:
+
+```
+src/
+├── manifest/        # Browser-specific manifest files
+│   ├── base.json    # Shared manifest config
+│   ├── chrome.json  # Chrome-specific overrides
+│   └── firefox.json # Firefox-specific overrides
+├── popup/           # Extension popup UI
+├── options/         # Settings page
+├── background/      # Service worker / background script
+├── content/         # Content script for link modification
+├── lib/             # Shared utilities
+└── assets/          # Icons and images
+```
+
+## Development Prerequisites
+
+Before you start contributing:
+
+- **Node.js 22+** is required
+- Familiarity with browser extension development (Manifest V3)
+- Understanding of Chrome and Firefox extension APIs
+
+## Getting Help
+
+If you need help with your contribution:
+
+- Check the [GitHub Issues](https://github.com/freshjuice-dev/hubspot-devtools-extension/issues) for similar questions
+- Review the [Building](/development/building) and [Testing](/development/testing) guides
+- Ask questions in your Pull Request comments
+
+## License
+
+By contributing, you agree that your contributions will be licensed under the [MIT License](https://github.com/freshjuice-dev/hubspot-devtools-extension/blob/main/LICENSE).

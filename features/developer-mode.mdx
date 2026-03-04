@@ -1,0 +1,258 @@
+---
+title: Developer Mode
+description: Enable HubSpot's developer mode for access to additional development tools and features
+---
+
+Developer Mode adds the `developerMode=true` parameter to your HubSpot URLs, enabling additional developer features and tools in the HubSpot platform.
+
+## What It Does
+
+When Developer Mode is enabled, HubSpot provides:
+- Access to developer-specific UI elements
+- Additional debugging information
+- Developer tools and utilities
+- Enhanced error messages and diagnostics
+
+<Note>
+The exact features enabled by Developer Mode depend on your HubSpot account type and permissions. Some features may only be available to developers with specific account access.
+</Note>
+
+## How to Use It
+
+### Via Popup
+
+1. Click the FreshJuice extension icon
+2. Toggle **Developer Mode** on
+3. The page will reload with `?developerMode=true` added to the URL
+
+### Via Context Menu
+
+1. Right-click anywhere on the page
+2. Select **FreshJuice HubSpot DevTools** → **Add Developer Mode**
+3. The page will reload with the parameter enabled
+
+### Via Keyboard Shortcut
+
+Use `Ctrl+Shift+M` (or `Cmd+Shift+M` on Mac) to toggle Developer Mode on the current page.
+
+## URL Parameter
+
+Developer Mode adds this parameter to your URLs:
+
+```
+developerMode=true
+```
+
+**Example URL:**
+```
+https://www.example.com/page?developerMode=true
+```
+
+## Technical Details
+
+### Parameter Configuration
+
+From `src/lib/url-params.js:10`:
+
+```javascript
+const URL_PARAMS = {
+  developerMode: { key: 'developerMode', value: 'true' }
+};
+```
+
+### Toggle Detection
+
+The extension checks the current URL for the parameter (`src/popup/popup.js:102-104`):
+
+```javascript
+return url.searchParams.has('hsDebug') ||
+       url.searchParams.has('hsCacheBuster') ||
+       url.searchParams.has('developerMode');
+```
+
+### Context Menu Integration
+
+Developer Mode can be toggled via context menu (`src/background/background.js:68-72`):
+
+```javascript
+browserAPI.contextMenus.create({
+  id: 'hsdevtools-page-dev',
+  parentId: 'hsdevtools-page-parent',
+  title: 'Add Developer Mode',
+  contexts: ['page']
+});
+```
+
+The menu title dynamically changes to "Remove Developer Mode" when the parameter is already present.
+
+## Use Cases
+
+### Accessing Developer Tools
+
+Enable Developer Mode to access HubSpot's developer-specific features:
+
+```
+1. Enable Developer Mode
+2. Look for additional UI elements or menu options
+3. Access developer tools that may be hidden by default
+```
+
+### Enhanced Debugging
+
+Combine with Debug Mode for comprehensive debugging:
+
+```
+1. Enable both Developer Mode and Debug Mode
+2. Access enhanced error messages
+3. Use developer-specific debugging tools
+4. Get more detailed diagnostic information
+```
+
+### Template Development
+
+When developing HubSpot templates:
+
+```
+1. Enable Developer Mode while working on templates
+2. Access template-specific developer features
+3. See additional template information and options
+```
+
+<Tip>
+Use the context menu "Add All Params" option to enable Debug Mode, Cache Buster, and Developer Mode simultaneously for maximum development power.
+</Tip>
+
+## Enabling All Parameters at Once
+
+From the context menu, you can enable all three debug parameters simultaneously (`src/background/background.js:81-86`):
+
+```javascript
+browserAPI.contextMenus.create({
+  id: 'hsdevtools-page-all',
+  parentId: 'hsdevtools-page-parent',
+  title: 'Add All Params',
+  contexts: ['page']
+});
+```
+
+This creates a URL with all parameters:
+```
+https://example.com?hsDebug=true&hsCacheBuster=1709568000000&developerMode=true
+```
+
+## Domain Management
+
+When you enable Developer Mode for the first time on a domain:
+
+1. The domain is automatically added to your allowed domains list
+2. Badge counter will show active parameters
+3. Auto-apply to links feature becomes available (if enabled in settings)
+4. Parameters persist across sessions (if enabled in settings)
+
+## Persistence
+
+If **Persist across sessions** is enabled in settings:
+
+1. Developer Mode state is saved when you enable it
+2. When you navigate to other pages on the same domain, the parameter is automatically re-applied
+3. The parameter persists even after closing and reopening your browser
+
+From `src/background/background.js:312-318`:
+
+```javascript
+else {
+  // For other params, only add if missing
+  if (!url.searchParams.has(paramKey)) {
+    paramsToSet[paramKey] = 'true';
+    needsUpdate = true;
+  }
+}
+```
+
+To clear persistence:
+- Toggle Developer Mode off
+- Click **Forget Website** in the popup
+- Remove the domain from Settings
+
+## Keyboard Shortcuts
+
+Developer Mode can be quickly toggled using keyboard shortcuts (`src/background/background.js:548-552`):
+
+```javascript
+const commandToParam = {
+  'toggle-debug': 'hsDebug',
+  'toggle-cache-buster': 'hsCacheBuster',
+  'toggle-developer-mode': 'developerMode'
+};
+```
+
+The shortcut toggles the parameter on/off and automatically reloads the page.
+
+<Warning>
+Developer Mode is intended for development and testing. Some features enabled by this parameter may not be fully supported or may change without notice.
+</Warning>
+
+## Edge Cases
+
+### Parameter Already Exists
+
+If the URL already has `developerMode=true`:
+- Toggling off removes the parameter and reloads
+- Toggling on has no additional effect (parameter already present)
+
+### Context Menu Toggle
+
+The context menu intelligently toggles the parameter (`src/background/background.js:160-172`):
+
+```javascript
+paramsToToggle.forEach(param => {
+  if (urlObj.searchParams.has(param)) {
+    // Remove if exists
+    urlObj.searchParams.delete(param);
+  } else {
+    // Add if doesn't exist
+    isAddingParams = true;
+    if (param === 'hsCacheBuster') {
+      urlObj.searchParams.set(param, Date.now().toString());
+    } else {
+      urlObj.searchParams.set(param, 'true');
+    }
+  }
+});
+```
+
+### Multiple Parameters
+
+Developer Mode works seamlessly with other debug parameters:
+
+```
+https://example.com?hsDebug=true&developerMode=true
+https://example.com?hsCacheBuster=1709568000000&developerMode=true
+https://example.com?hsDebug=true&hsCacheBuster=1709568000000&developerMode=true
+```
+
+### Non-HubSpot Sites
+
+The `developerMode` parameter is HubSpot-specific and has no effect on non-HubSpot websites. The extension will still add it if enabled, but it won't activate any features.
+
+## Auto-Apply to Links
+
+When [Auto-Apply Links](/features/auto-apply-links) is enabled and you're on a page with `developerMode=true`, hovering over same-domain links will automatically add the parameter to those links.
+
+From `src/content/content-script.js:83-89`:
+
+```javascript
+Object.entries(URL_PARAMS).forEach(([mode, { key, value }]) => {
+  if (url.searchParams.has(key)) {
+    // Use the value from URL or generate new one for dynamic values
+    params[key] = typeof value === 'function' ? value() : url.searchParams.get(key);
+  }
+});
+```
+
+## Related Features
+
+- [Debug Mode](/features/debug-mode) - Enable HubSpot debugging output
+- [Cache Buster](/features/cache-buster) - Force fresh content loading
+- [Context Menus](/features/context-menus) - Quick access to all parameters
+- [Auto-Apply Links](/features/auto-apply-links) - Propagate developer mode to same-domain links

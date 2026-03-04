@@ -1,0 +1,330 @@
+---
+title: Manifest Files
+description: Understanding the manifest configuration for Chrome and Firefox extensions
+---
+
+The FreshJuice HubSpot DevTools extension uses three separate manifest files to support both Chrome and Firefox while maintaining shared configuration.
+
+## Manifest File Structure
+
+The manifest configuration is split across three JSON files in `src/manifest/`:
+
+```
+src/manifest/
+├── base.json      # Shared configuration
+├── chrome.json    # Chrome-specific (complete manifest)
+└── firefox.json   # Firefox-specific (complete manifest)
+```
+
+## Base Manifest (base.json)
+
+The `base.json` file contains shared properties used across all browsers:
+
+```json
+{
+  "name": "FreshJuice HubSpot DevTools",
+  "short_name": "FJ HubSpot DevTools",
+  "version": "1.0.0",
+  "description": "Quick access to HubSpot debug parameters and HubL documentation for CMS developers",
+  "author": "FreshJuice",
+  "homepage_url": "https://freshjuice.dev",
+  "icons": {
+    "16": "assets/icons/icon-16.png",
+    "32": "assets/icons/icon-32.png",
+    "48": "assets/icons/icon-48.png",
+    "128": "assets/icons/icon-128.png"
+  },
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  }
+}
+```
+
+## Chrome Manifest (chrome.json)
+
+The Chrome manifest is a complete Manifest V3 configuration:
+
+```json
+{
+  "manifest_version": 3,
+  "name": "FreshJuice HubSpot DevTools",
+  "description": "Quick access to HubSpot debug parameters and HubL documentation for CMS developers",
+  "version": "1.2.1",
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "HubSpot DevTools",
+    "default_icon": {
+      "16": "assets/icons/icon-16.png",
+      "32": "assets/icons/icon-32.png",
+      "48": "assets/icons/icon-48.png"
+    }
+  },
+  "background": {
+    "service_worker": "background/background.js"
+  },
+  "permissions": [
+    "storage",
+    "tabs",
+    "activeTab",
+    "scripting",
+    "webNavigation",
+    "contextMenus"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["lib/browser-api.js", "lib/url-params.js", "content/content-script.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "commands": {
+    "toggle-debug": {
+      "description": "Toggle Debug Mode"
+    },
+    "toggle-cache-buster": {
+      "description": "Toggle Cache Buster"
+    },
+    "toggle-developer-mode": {
+      "description": "Toggle Developer Mode"
+    }
+  }
+}
+```
+
+### Key Chrome MV3 Properties
+
+**manifest_version: 3**
+Specifies this is a Manifest V3 extension, required for new Chrome extensions.
+
+**action**
+Defines the browser action (toolbar button) and popup:
+- `default_popup`: Path to the popup HTML file
+- `default_title`: Tooltip text when hovering over the icon
+- `default_icon`: Icon sizes for different display densities
+
+**background.service_worker**
+MV3 replaces persistent background pages with event-driven service workers:
+```json
+"background": {
+  "service_worker": "background/background.js"
+}
+```
+
+See `/home/daytona/workspace/source/src/background/background.js:1` for the service worker implementation.
+
+**content_scripts**
+Defines scripts injected into web pages:
+```json
+"content_scripts": [
+  {
+    "matches": ["<all_urls>"],
+    "js": ["lib/browser-api.js", "lib/url-params.js", "content/content-script.js"],
+    "run_at": "document_idle"
+  }
+]
+```
+- `matches`: URL patterns where scripts should inject
+- `js`: Array of script files loaded in order
+- `run_at`: Injection timing (`document_idle` = after page load)
+
+## Firefox Manifest (firefox.json)
+
+Firefox has additional browser-specific requirements:
+
+```json
+{
+  "manifest_version": 3,
+  "name": "FreshJuice HubSpot DevTools",
+  "description": "Quick access to HubSpot debug parameters and HubL documentation for CMS developers",
+  "version": "1.2.1",
+  "developer": {
+    "name": "FreshJuice",
+    "url": "https://freshjuice.dev"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "hubspot-devtools@freshjuice.dev",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    },
+    "gecko_android": {
+      "strict_min_version": "142.0"
+    }
+  },
+  "background": {
+    "scripts": ["background/background.js"],
+    "service_worker": "background/background.js"
+  }
+}
+```
+
+### Firefox-Specific Properties
+
+**browser_specific_settings**
+Required for Firefox extensions:
+```json
+"browser_specific_settings": {
+  "gecko": {
+    "id": "hubspot-devtools@freshjuice.dev",
+    "strict_min_version": "140.0"
+  }
+}
+```
+- `id`: Unique extension identifier (required for Firefox)
+- `strict_min_version`: Minimum Firefox version
+- `data_collection_permissions`: Privacy settings for Firefox Add-ons
+
+**background (dual format)**
+Firefox supports both formats during MV3 transition:
+```json
+"background": {
+  "scripts": ["background/background.js"],
+  "service_worker": "background/background.js"
+}
+```
+
+## Permissions Explained
+
+### Required Permissions
+
+```json
+"permissions": [
+  "storage",
+  "tabs",
+  "activeTab",
+  "scripting",
+  "webNavigation",
+  "contextMenus"
+]
+```
+
+| Permission | Purpose |
+|------------|--------|
+| `storage` | Save extension settings and domain allowlist using `chrome.storage.sync` |
+| `tabs` | Query and update tab URLs to add/remove debug parameters |
+| `activeTab` | Access currently active tab information |
+| `scripting` | Inject content scripts dynamically using `chrome.scripting.executeScript()` |
+| `webNavigation` | Listen for page navigation events to apply persistent parameters |
+| `contextMenus` | Add right-click menu options for quick parameter toggles |
+
+### Host Permissions
+
+```json
+"host_permissions": [
+  "<all_urls>"
+]
+```
+
+Required to:
+- Inject content scripts into any web page
+- Modify URLs on any domain
+- Apply debug parameters across all websites
+
+This is necessary because HubSpot sites can be on any custom domain.
+
+## Keyboard Commands
+
+```json
+"commands": {
+  "toggle-debug": {
+    "description": "Toggle Debug Mode"
+  },
+  "toggle-cache-buster": {
+    "description": "Toggle Cache Buster"
+  },
+  "toggle-developer-mode": {
+    "description": "Toggle Developer Mode"
+  }
+}
+```
+
+Defines keyboard shortcuts users can configure in browser settings. Shortcuts are not pre-defined to avoid conflicts.
+
+See `/home/daytona/workspace/source/src/background/background.js:542` for command handler implementation.
+
+## MV3 Requirements
+
+Manifest V3 introduces several breaking changes from V2:
+
+### Service Workers (Not Background Pages)
+
+**MV2 (Old)**:
+```json
+"background": {
+  "scripts": ["background.js"],
+  "persistent": false
+}
+```
+
+**MV3 (New)**:
+```json
+"background": {
+  "service_worker": "background/background.js"
+}
+```
+
+Service workers:
+- Are event-driven and terminate when idle
+- Cannot use DOM APIs (no `window`, `document`)
+- Must use `chrome.storage` instead of `localStorage`
+- Have a limited lifetime
+
+### Host Permissions Separated
+
+**MV2 (Old)**:
+```json
+"permissions": [
+  "tabs",
+  "<all_urls>"
+]
+```
+
+**MV3 (New)**:
+```json
+"permissions": ["tabs"],
+"host_permissions": ["<all_urls>"]
+```
+
+### Action API (Not browserAction)
+
+**MV2**: `chrome.browserAction`  
+**MV3**: `chrome.action`
+
+The manifest property also changed:
+```json
+"action": {
+  "default_popup": "popup/popup.html"
+}
+```
+
+## Build Process
+
+During build (`npm run build:chrome` or `npm run build:firefox`), the appropriate manifest file is copied to `dist/{browser}/manifest.json`.
+
+The build script:
+1. Selects the correct manifest file for the target browser
+2. Copies all source files to `dist/{browser}/`
+3. Validates the manifest against browser requirements
+4. Creates a distributable package
+
+## Privacy Considerations
+
+The extension manifest declares:
+- No analytics or tracking
+- Local storage only (no external data transmission)
+- Transparent permission usage
+
+From `firefox.json`:
+```json
+"data_collection_permissions": {
+  "required": ["none"]
+}
+```
+
+See the [Privacy Policy](https://github.com/freshjuice-dev/hubspot-devtools-extension/blob/main/PRIVACY.md) for details.

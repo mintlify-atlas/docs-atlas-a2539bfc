@@ -1,0 +1,370 @@
+---
+title: Auto-Apply Links
+description: Automatically add debug parameters to same-domain links when you hover over them
+---
+
+Auto-Apply Links is a content script feature that automatically adds active debug parameters to same-domain links as you hover over them, ensuring your debug settings persist as you navigate.
+
+## What It Does
+
+When enabled, Auto-Apply Links:
+- Detects when you hover over links on the page
+- Checks if the link points to the same domain
+- Adds all currently active debug parameters to the link's URL
+- Preserves the original link URL for restoration
+
+<Note>
+This feature only modifies links to the **same domain**. External links and special protocols (mailto:, tel:, javascript:) are never modified.
+</Note>
+
+## How to Enable It
+
+1. Click the FreshJuice extension icon
+2. Click the **Settings** link (gear icon)
+3. Ensure **Auto-apply to links** is checked (enabled by default)
+
+## Requirements
+
+For Auto-Apply Links to work, **all three conditions** must be met:
+
+1. **Setting enabled**: Auto-apply to links is ON in settings
+2. **Domain allowed**: Current domain is in your allowed domains list
+3. **Parameters active**: Current page URL has at least one debug parameter (`hsDebug`, `hsCacheBuster`, or `developerMode`)
+
+From `src/content/content-script.js:185-191`:
+
+```javascript
+const autoApplyEnabled = state.settings && state.settings.autoApplyToLinks;
+const domainAllowed = isDomainAllowed(state.domains);
+const hasDebugParams = pageHasDebugParams();
+
+isEnabled = autoApplyEnabled && domainAllowed && hasDebugParams;
+```
+
+## Technical Details
+
+### Content Script Injection
+
+The content script is injected into pages on allowed domains (`src/background/background.js:516-519`):
+
+```javascript
+await browserAPI.scripting.executeScript({
+  target: { tabId },
+  files: ['lib/browser-api.js', 'lib/url-params.js', 'content/content-script.js']
+});
+```
+
+### Link Detection on Hover
+
+The content script listens for mouseover events (`src/content/content-script.js:254`):
+
+```javascript
+document.addEventListener('mouseover', handleMouseEnter, true);
+```
+
+### Link Modification Logic
+
+When you hover over a link (`src/content/content-script.js:149-172`):
+
+```javascript
+function handleMouseEnter(event) {
+  if (!isEnabled) return;
+
+  const link = event.target.closest('a');
+  if (!link) return;
+
+  const href = link.getAttribute('href');
+  if (!shouldModifyLink(href)) return;
+
+  // Get active params from current page URL
+  const params = getActiveParamsFromUrl();
+  if (Object.keys(params).length === 0) return;
+
+  // Store original href if not already stored
+  if (!link.dataset.hsOriginalHref) {
+    link.dataset.hsOriginalHref = link.href;
+  }
+
+  // Modify the URL
+  const newUrl = addParamsToUrl(link.href, params);
+  if (newUrl !== link.href) {
+    link.href = newUrl;
+  }
+}
+```
+
+### Same-Domain Check
+
+Only same-domain links are modified (`src/content/content-script.js:102-121`):
+
+```javascript
+function shouldModifyLink(href) {
+  if (!href) return false;
+  if (href.startsWith('#')) return false;
+  if (href.startsWith('javascript:')) return false;
+  if (href.startsWith('mailto:')) return false;
+  if (href.startsWith('tel:')) return false;
+
+  try {
+    const url = new URL(href, window.location.origin);
+
+    // Only modify http(s) links
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
+
+    // Only modify same-domain links
+    if (!isSameDomain(url.hostname, window.location.hostname)) return false;
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+```
+
+The same-domain check handles www prefix normalization (`src/content/content-script.js:33-36`):
+
+```javascript
+function isSameDomain(hostname1, hostname2) {
+  return normalizeHostname(hostname1) === normalizeHostname(hostname2);
+}
+```
+
+## Active Parameter Detection
+
+The content script reads parameters from the **current page URL**, not from stored settings (`src/content/content-script.js:76-95`):
+
+```javascript
+function getActiveParamsFromUrl() {
+  const params = {};
+
+  try {
+    const url = new URL(window.location.href);
+
+    if (typeof URL_PARAMS !== 'undefined') {
+      Object.entries(URL_PARAMS).forEach(([mode, { key, value }]) => {
+        if (url.searchParams.has(key)) {
+          // Use the value from URL or generate new one for dynamic values
+          params[key] = typeof value === 'function' ? value() : url.searchParams.get(key);
+        }
+      });
+    }
+  } catch (e) {
+    // Invalid URL
+  }
+
+  return params;
+}
+```
+
+This means:
+- If current page has `?hsDebug=true`, links get `hsDebug=true`
+- If current page has `?hsCacheBuster=123`, links get a **new timestamp** (function regenerates value)
+- If current page has no parameters, links are not modified
+
+## Use Cases
+
+### Maintaining Debug Context While Navigating
+
+When exploring your site with debug parameters:
+
+```
+1. Enable Debug Mode on your homepage
+2. Enable Auto-Apply Links in settings
+3. Hover over navigation links
+4. Click any link - debug parameter is preserved
+5. Continue navigating with debug mode active on all pages
+```
+
+### Cache Busting Across Multi-Page Flows
+
+When testing a multi-step process:
+
+```
+1. Enable Cache Buster on step 1
+2. Hover over "Next" button
+3. Cache buster is added with a fresh timestamp
+4. Click to step 2 - content is not cached
+5. Repeat for each step
+```
+
+### Developer Mode Throughout Your Site
+
+When working with developer features:
+
+```
+1. Enable Developer Mode on any page
+2. Navigate through your site normally
+3. All same-domain links automatically include developerMode=true
+4. Developer features remain active throughout your session
+```
+
+<Tip>
+Auto-Apply Links works with all three debug parameters simultaneously. If you have `hsDebug=true&hsCacheBuster=123&developerMode=true` in your URL, all three will be added to links you hover over.
+</Tip>
+
+## Link Types
+
+### Modified Links
+
+✅ Same-domain HTTP(S) links:
+```html
+<a href="/about">About</a>
+<a href="https://example.com/contact">Contact</a>
+<a href="../products">Products</a>
+```
+
+### Not Modified
+
+❌ External links:
+```html
+<a href="https://external.com">External</a>
+```
+
+❌ Hash/anchor links:
+```html
+<a href="#section">Section</a>
+```
+
+❌ Special protocols:
+```html
+<a href="mailto:hello@example.com">Email</a>
+<a href="tel:+1234567890">Call</a>
+<a href="javascript:void(0)">JS Link</a>
+```
+
+## Original URL Preservation
+
+The content script preserves the original URL in a data attribute (`src/content/content-script.js:163-165`):
+
+```javascript
+if (!link.dataset.hsOriginalHref) {
+  link.dataset.hsOriginalHref = link.href;
+}
+```
+
+This allows:
+- Multiple hovers without duplicating parameters
+- Potential restoration of original URLs
+- Debugging to see what the original link was
+
+## State Synchronization
+
+The content script responds to state changes in real-time:
+
+### From Storage Changes
+
+```javascript
+api.storage.onChanged.addListener((changes, area) => {
+  if (area === 'sync' && changes.state) {
+    state = changes.state.newValue;
+    updateEnabledState();
+  }
+});
+```
+
+### From Messages
+
+```javascript
+api.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  switch (message.action) {
+    case 'settingsChanged':
+      init();
+      break;
+
+    case 'activate':
+      state = message.state;
+      updateEnabledState();
+      break;
+
+    case 'deactivate':
+      isEnabled = false;
+      break;
+  }
+
+  sendResponse({ success: true });
+  return true;
+});
+```
+
+This ensures the feature immediately responds when you:
+- Toggle settings
+- Change allowed domains
+- Enable/disable debug parameters
+
+## Disabling Auto-Apply
+
+To disable Auto-Apply Links:
+
+1. Open FreshJuice extension popup
+2. Click Settings (gear icon)
+3. Uncheck **Auto-apply to links**
+4. Click Save
+
+When disabled:
+- Links are no longer modified on hover
+- You can still manually enable parameters via popup or context menu
+- Parameter persistence may still work (controlled by separate setting)
+
+<Warning>
+Auto-Apply Links modifies link URLs dynamically. If you're debugging link behavior or testing analytics that depend on specific URLs, you may want to temporarily disable this feature.
+</Warning>
+
+## Edge Cases
+
+### www Subdomain Handling
+
+The extension normalizes domains to handle www (`src/content/content-script.js:24-26`):
+
+```javascript
+function normalizeHostname(hostname) {
+  return hostname.toLowerCase().replace(/^www\./, '');
+}
+```
+
+This means:
+- `www.example.com` and `example.com` are considered the same domain
+- Links between these variants will be modified
+
+### Relative URLs
+
+Relative URLs are resolved relative to the current page:
+
+```javascript
+const url = new URL(href, window.location.origin);
+```
+
+```
+Current page: https://example.com/blog/
+Link href: ../about
+Resolved: https://example.com/about
+Result: Modified ✅
+```
+
+### Parameters Already Present
+
+If a link already has debug parameters:
+- Existing static parameters (`hsDebug`, `developerMode`) are updated/replaced
+- Cache buster gets a new timestamp value
+- Other query parameters are preserved
+
+### Dynamic Content
+
+For single-page applications that load content dynamically:
+- The content script uses event capture (bubbling phase)
+- Works with dynamically added links
+- No need to re-inject the script for new content
+
+## Performance
+
+Auto-Apply Links is designed to be lightweight:
+- Uses event delegation (single listener on document)
+- Only modifies links that match criteria
+- Minimal DOM manipulation (only href attribute)
+- No continuous polling or timers
+
+## Related Features
+
+- [Debug Mode](/features/debug-mode) - Parameter that gets auto-applied to links
+- [Cache Buster](/features/cache-buster) - Dynamic parameter with fresh timestamps
+- [Developer Mode](/features/developer-mode) - Another parameter that propagates
+- [Context Menus](/features/context-menus) - Manual alternative to auto-apply

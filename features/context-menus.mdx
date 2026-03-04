@@ -1,0 +1,403 @@
+---
+title: Context Menus
+description: Quick access to debug parameters via right-click context menus on pages and links
+---
+
+Context Menus provide quick access to all debug parameters through right-click menus, allowing you to add or remove parameters without opening the extension popup.
+
+## What It Does
+
+The extension adds a context menu to your browser that allows you to:
+- Toggle individual debug parameters (Debug Mode, Cache Buster, Developer Mode)
+- Add or remove all parameters at once
+- See the current state of parameters (menu titles change dynamically)
+- Quickly enable debug features on any page
+
+## How to Use It
+
+### On Any Page
+
+1. Right-click anywhere on the page
+2. Select **FreshJuice HubSpot DevTools**
+3. Choose an option:
+   - **Add Debug Mode** - Adds `hsDebug=true`
+   - **Add Cache Buster** - Adds `hsCacheBuster=[timestamp]`
+   - **Add Developer Mode** - Adds `developerMode=true`
+   - **Add All Params** - Adds all three parameters
+
+<Note>
+Menu items automatically change from "Add" to "Remove" based on whether the parameter is already present in the current page URL.
+</Note>
+
+## Menu Structure
+
+The context menu is created on extension installation (`src/background/background.js:41-86`):
+
+```javascript
+function createContextMenus() {
+  // Remove existing menus first
+  browserAPI.contextMenus.removeAll();
+
+  // Parent menu for page
+  browserAPI.contextMenus.create({
+    id: 'hsdevtools-page-parent',
+    title: 'FreshJuice HubSpot DevTools',
+    contexts: ['page']
+  });
+
+  // Page submenu items
+  browserAPI.contextMenus.create({
+    id: 'hsdevtools-page-debug',
+    parentId: 'hsdevtools-page-parent',
+    title: 'Add Debug Mode',
+    contexts: ['page']
+  });
+
+  browserAPI.contextMenus.create({
+    id: 'hsdevtools-page-cache',
+    parentId: 'hsdevtools-page-parent',
+    title: 'Add Cache Buster',
+    contexts: ['page']
+  });
+
+  browserAPI.contextMenus.create({
+    id: 'hsdevtools-page-dev',
+    parentId: 'hsdevtools-page-parent',
+    title: 'Add Developer Mode',
+    contexts: ['page']
+  });
+
+  browserAPI.contextMenus.create({
+    id: 'hsdevtools-page-separator',
+    parentId: 'hsdevtools-page-parent',
+    type: 'separator',
+    contexts: ['page']
+  });
+
+  browserAPI.contextMenus.create({
+    id: 'hsdevtools-page-all',
+    parentId: 'hsdevtools-page-parent',
+    title: 'Add All Params',
+    contexts: ['page']
+  });
+}
+```
+
+## Dynamic Menu Titles
+
+Menu titles automatically update based on the current page URL (`src/background/background.js:93-121`):
+
+```javascript
+function updateContextMenuTitles(url) {
+  if (!url || !url.startsWith('http')) return;
+
+  try {
+    const urlObj = new URL(url);
+    const hasDebug = urlObj.searchParams.has('hsDebug');
+    const hasCache = urlObj.searchParams.has('hsCacheBuster');
+    const hasDev = urlObj.searchParams.has('developerMode');
+    const hasAll = hasDebug && hasCache && hasDev;
+
+    browserAPI.contextMenus.update('hsdevtools-page-debug', {
+      title: hasDebug ? 'Remove Debug Mode' : 'Add Debug Mode'
+    });
+
+    browserAPI.contextMenus.update('hsdevtools-page-cache', {
+      title: hasCache ? 'Remove Cache Buster' : 'Add Cache Buster'
+    });
+
+    browserAPI.contextMenus.update('hsdevtools-page-dev', {
+      title: hasDev ? 'Remove Developer Mode' : 'Add Developer Mode'
+    });
+
+    browserAPI.contextMenus.update('hsdevtools-page-all', {
+      title: hasAll ? 'Remove All Params' : 'Add All Params'
+    });
+  } catch (e) {
+    // Invalid URL, ignore
+  }
+}
+```
+
+Titles update when:
+- You switch to a different tab
+- The current tab's URL changes
+- You click a menu item
+
+## Toggle Behavior
+
+When you click a menu item (`src/background/background.js:126-187`):
+
+```javascript
+browserAPI.contextMenus.onClicked.addListener(async (info, tab) => {
+  const menuId = info.menuItemId;
+  let url = null;
+  let isNewTab = false;
+
+  // Determine URL and whether to open in new tab
+  if (menuId.startsWith('hsdevtools-link-')) {
+    url = info.linkUrl;
+    isNewTab = true;
+  } else if (menuId.startsWith('hsdevtools-page-')) {
+    url = info.pageUrl || tab.url;
+    isNewTab = false;
+  }
+
+  if (!url || !url.startsWith('http')) return;
+
+  // Determine which params to toggle
+  let paramsToToggle = [];
+  if (menuId.includes('-debug')) {
+    paramsToToggle = ['hsDebug'];
+  } else if (menuId.includes('-cache')) {
+    paramsToToggle = ['hsCacheBuster'];
+  } else if (menuId.includes('-dev')) {
+    paramsToToggle = ['developerMode'];
+  } else if (menuId.includes('-all')) {
+    paramsToToggle = ['hsDebug', 'hsCacheBuster', 'developerMode'];
+  }
+
+  // Build new URL with toggled params
+  try {
+    const urlObj = new URL(url);
+    let isAddingParams = false;
+
+    paramsToToggle.forEach(param => {
+      if (urlObj.searchParams.has(param)) {
+        // Remove if exists
+        urlObj.searchParams.delete(param);
+      } else {
+        // Add if doesn't exist
+        isAddingParams = true;
+        if (param === 'hsCacheBuster') {
+          urlObj.searchParams.set(param, Date.now().toString());
+        } else {
+          urlObj.searchParams.set(param, 'true');
+        }
+      }
+    });
+
+    // If adding params, also whitelist the domain
+    if (isAddingParams) {
+      await addDomainToAllowedList(urlObj.hostname);
+    }
+
+    if (isNewTab) {
+      browserAPI.tabs.create({ url: urlObj.toString() });
+    } else {
+      browserAPI.tabs.update(tab.id, { url: urlObj.toString() });
+    }
+  } catch (e) {
+    console.error('Failed to toggle debug params:', e);
+  }
+});
+```
+
+### Toggle Logic
+
+- **If parameter exists**: Remove it from URL
+- **If parameter doesn't exist**: Add it to URL
+- **Cache Buster**: Always gets a fresh timestamp when added
+- **Domain whitelisting**: Domain is automatically added to allowed list when adding parameters
+
+## Use Cases
+
+### Quick Debug Toggle
+
+Enable debugging on any page without opening the popup:
+
+```
+1. Navigate to a page
+2. Right-click anywhere
+3. Select FreshJuice HubSpot DevTools → Add Debug Mode
+4. Page reloads with debug parameter
+```
+
+### Testing Different Parameter Combinations
+
+Quickly test different debug configurations:
+
+```
+1. Right-click → Add Debug Mode
+2. Test the page
+3. Right-click → Add Cache Buster
+4. Test with both parameters
+5. Right-click → Add All Params
+6. Test with full debug suite
+```
+
+### Removing Parameters
+
+Quickly clean up debug parameters:
+
+```
+Current URL: https://example.com?hsDebug=true&hsCacheBuster=123
+
+1. Right-click → Remove All Params
+2. Page reloads to: https://example.com
+```
+
+### One-Off Debugging
+
+Add parameters without persisting them:
+
+```
+1. Right-click → Add Debug Mode
+2. Investigate the issue
+3. Right-click → Remove Debug Mode
+4. Continue normal browsing
+```
+
+<Tip>
+The context menu is faster than the popup for quick toggles. Use it when you want to enable debug features without managing settings.
+</Tip>
+
+## Automatic Domain Whitelisting
+
+When adding parameters via context menu (`src/background/background.js:175-177`):
+
+```javascript
+if (isAddingParams) {
+  await addDomainToAllowedList(urlObj.hostname);
+}
+```
+
+The domain is automatically added to your allowed domains list. This enables:
+- Badge counter showing active parameters
+- Auto-apply to links (if enabled in settings)
+- Persistence across sessions (if enabled in settings)
+
+## Menu Item IDs
+
+Each menu item has a unique ID for event handling:
+
+- `hsdevtools-page-parent` - Parent menu container
+- `hsdevtools-page-debug` - Debug Mode toggle
+- `hsdevtools-page-cache` - Cache Buster toggle
+- `hsdevtools-page-dev` - Developer Mode toggle
+- `hsdevtools-page-separator` - Visual separator
+- `hsdevtools-page-all` - All parameters toggle
+
+## "Add All Params" Feature
+
+The "Add All Params" option is a powerful shortcut that:
+
+1. Adds all three debug parameters at once
+2. Uses a fresh timestamp for Cache Buster
+3. Reloads the page with all parameters active
+
+Resulting URL:
+```
+https://example.com?hsDebug=true&hsCacheBuster=1709568000000&developerMode=true
+```
+
+When all parameters are already present, the menu shows "Remove All Params" and removes all three.
+
+## Menu Updates
+
+Menu titles update automatically when:
+
+### Tab Activation
+
+```javascript
+browserAPI.tabs.onActivated.addListener(async () => {
+  updateBadgeForActiveTab();
+  try {
+    const [tab] = await browserAPI.tabs.query({ active: true, currentWindow: true });
+    if (tab && tab.url) {
+      updateContextMenuTitles(tab.url);
+    }
+  } catch (e) {
+    // Ignore errors
+  }
+});
+```
+
+### Tab URL Changes
+
+```javascript
+browserAPI.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'complete' || changeInfo.url) {
+    updateBadgeForActiveTab();
+    if (tab.active && tab.url) {
+      updateContextMenuTitles(tab.url);
+    }
+  }
+});
+```
+
+This ensures menu titles always reflect the current state of the active tab.
+
+<Warning>
+Context menu actions reload the current page. Make sure to save any unsaved work before using context menu toggles.
+</Warning>
+
+## Edge Cases
+
+### Non-HTTP URLs
+
+The context menu is visible but non-functional on:
+- `chrome://` pages
+- `about:` pages
+- `file://` URLs
+- Browser settings pages
+
+The click handler checks for HTTP(S) and exits early:
+```javascript
+if (!url || !url.startsWith('http')) return;
+```
+
+### Parameter Already Present
+
+**Scenario**: Page has `?hsDebug=true`, you click "Remove Debug Mode"
+
+```javascript
+if (urlObj.searchParams.has(param)) {
+  urlObj.searchParams.delete(param);
+}
+```
+
+Result: Parameter is removed, page reloads without it.
+
+**Scenario**: Page has `?hsDebug=true`, you click "Add All Params"
+
+```javascript
+paramsToToggle.forEach(param => {
+  if (urlObj.searchParams.has(param)) {
+    urlObj.searchParams.delete(param);
+  } else {
+    // Add new ones
+  }
+});
+```
+
+Result: All three parameters are toggled. Since `hsDebug` exists, it's removed. `hsCacheBuster` and `developerMode` are added.
+
+### Existing Query Parameters
+
+Debug parameters are added to URLs that already have query parameters:
+
+```
+Before: https://example.com?foo=bar&baz=qux
+After:  https://example.com?foo=bar&baz=qux&hsDebug=true
+```
+
+Existing parameters are never removed or modified.
+
+## Comparison with Popup
+
+| Feature | Context Menu | Popup |
+|---------|--------------|-------|
+| Speed | Faster (fewer clicks) | Slower (open popup first) |
+| Settings | Not available | Full settings access |
+| Domain management | Auto-whitelist only | View/manage domains |
+| Visual feedback | Menu title changes | Toggle switches |
+| Keyboard shortcuts | No | Yes |
+| Batch operations | "Add All Params" | Toggle multiple individually |
+
+## Related Features
+
+- [Debug Mode](/features/debug-mode) - Parameter toggled via context menu
+- [Cache Buster](/features/cache-buster) - Parameter toggled via context menu
+- [Developer Mode](/features/developer-mode) - Parameter toggled via context menu
+- [Auto-Apply Links](/features/auto-apply-links) - Complements context menu for navigation

@@ -1,0 +1,125 @@
+---
+title: Installation
+description: Install FreshJuice HubSpot DevTools from the Chrome Web Store, Firefox Add-ons, or manually for development.
+---
+
+You can install FreshJuice HubSpot DevTools from the official browser extension stores or manually for development purposes.
+
+## Install from store
+
+The easiest way to install the extension is from your browser's official extension store.
+
+<Steps>
+  <Step title="Choose your browser">
+    Select the appropriate store for your browser:
+    
+    - **Chrome/Edge/Brave**: [Chrome Web Store](https://chromewebstore.google.com/detail/jmlcckldioeofjchfaomgaimhpnlfgok)
+    - **Firefox**: [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/freshjuice-hubspot-devtools/)
+  </Step>
+  
+  <Step title="Install the extension">
+    Click the "Add to Chrome" or "Add to Firefox" button in the store listing.
+  </Step>
+  
+  <Step title="Confirm installation">
+    Your browser will prompt you to confirm the installation. Review the permissions and click "Add Extension."
+  </Step>
+  
+  <Step title="Pin the extension">
+    For easy access, pin the extension to your toolbar:
+    
+    - Click the extensions icon (puzzle piece) in your browser toolbar
+    - Find "FreshJuice HubSpot DevTools" in the list
+    - Click the pin icon to keep it visible
+  </Step>
+</Steps>
+
+<Note>
+The extension is available for all Chromium-based browsers (Chrome, Edge, Brave, Arc, etc.) and Firefox.
+</Note>
+
+## Manual installation
+
+Developers can manually install the extension for testing or contributing to the project.
+
+### Chrome/Edge/Brave
+
+<Steps>
+  <Step title="Download the release">
+    Download the latest release from the [GitHub releases page](https://github.com/freshjuice-dev/hubspot-devtools-extension/releases).
+    
+    Look for the file named `hubspot-devtools-chrome-*.zip`.
+  </Step>
+  
+  <Step title="Unzip the package">
+    Extract the contents of the ZIP file to a folder on your computer.
+  </Step>
+  
+  <Step title="Open extensions page">
+    Navigate to `chrome://extensions/` in your browser's address bar.
+  </Step>
+  
+  <Step title="Enable developer mode">
+    Toggle the "Developer mode" switch in the top right corner of the extensions page.
+  </Step>
+  
+  <Step title="Load the extension">
+    Click "Load unpacked" and select the folder where you extracted the extension files.
+  </Step>
+</Steps>
+
+### Firefox
+
+<Steps>
+  <Step title="Download the release">
+    Download the latest release from the [GitHub releases page](https://github.com/freshjuice-dev/hubspot-devtools-extension/releases).
+    
+    Look for the file named `hubspot-devtools-firefox-*.zip`.
+  </Step>
+  
+  <Step title="Open add-ons page">
+    Navigate to `about:addons` in Firefox's address bar.
+  </Step>
+  
+  <Step title="Install from file">
+    Click the gear icon and select "Install Add-on From File..."
+  </Step>
+  
+  <Step title="Select the ZIP file">
+    Choose the `hubspot-devtools-firefox-*.zip` file you downloaded (do not unzip it).
+  </Step>
+</Steps>
+
+<Warning>
+Manually installed extensions in Firefox are temporary and will be removed when you close the browser, unless you have a developer edition or unbranded build.
+</Warning>
+
+## Browser compatibility
+
+The extension is compatible with:
+
+| Browser | Minimum Version | Notes |
+|---------|----------------|-------|
+| Chrome | 88+ | Full support |
+| Edge | 88+ | Full support |
+| Brave | 1.20+ | Full support |
+| Arc | All versions | Full support |
+| Firefox | 109+ | Full support |
+| Opera | 74+ | Use Chrome Web Store |
+
+## Verifying installation
+
+After installation, you should see the FreshJuice HubSpot DevTools icon in your browser toolbar. The icon looks like a wrench or developer tool symbol.
+
+Click the icon to open the popup interface and verify that all controls are visible:
+- Debug Mode toggle
+- Cache Buster toggle
+- BackOffice Dev Mode toggle
+- Settings link
+- HubL documentation links
+
+## Next steps
+
+<Card title="Quickstart guide" icon="rocket" href="/quickstart">
+  Learn how to use the extension with a quick tutorial
+</Card>
