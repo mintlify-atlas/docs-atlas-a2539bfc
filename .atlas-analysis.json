@@ -1,0 +1,101 @@
+{
+  "projectType": "frontend",
+  "projectName": "FreshJuice HubSpot DevTools",
+  "projectDescription": "A browser extension for HubSpot CMS developers with quick access to debug parameters and HubL documentation",
+  "theme": "almond",
+  "primaryColor": "#f1a431",
+  "lightColor": "#559c1d",
+  "darkColor": "#f4f3e9",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/debug-mode",
+              "features/cache-buster",
+              "features/developer-mode",
+              "features/auto-apply-links",
+              "features/context-menus"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/settings",
+              "configuration/keyboard-shortcuts",
+              "configuration/allowed-domains"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Development",
+        "groups": [
+          {
+            "group": "Contributing",
+            "pages": [
+              "development/contributing",
+              "development/building",
+              "development/testing"
+            ]
+          },
+          {
+            "group": "Architecture",
+            "pages": [
+              "development/project-structure",
+              "development/manifest-files",
+              "development/content-scripts"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Reference",
+        "groups": [
+          {
+            "group": "Resources",
+            "pages": [
+              "reference/changelog",
+              "reference/privacy",
+              "reference/faq"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Debug Mode toggle (hsDebug=true)",
+    "Cache Buster with timestamp",
+    "BackOffice Developer Mode",
+    "Auto-apply parameters to internal links",
+    "Quick links to HubL documentation",
+    "Context menu integration",
+    "Keyboard shortcuts",
+    "Allowed domains management",
+    "Badge indicator for active parameters",
+    "Support for Chrome and Firefox"
+  ],
+  "publicApiSurface": [
+    "browserAPI.storage.sync (state management)",
+    "browserAPI.tabs (URL manipulation)",
+    "browserAPI.contextMenus (right-click menus)",
+    "browserAPI.commands (keyboard shortcuts)",
+    "URL_PARAMS (hsDebug, hsCacheBuster, developerMode)",
+    "getState() - retrieve extension state",
+    "updateState() - update extension state",
+    "addParamsToUrl() - add debug params to URL",
+    "removeParamsFromUrl() - remove debug params from URL"
+  ]
+}
